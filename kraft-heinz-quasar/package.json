@@ -1,11 +1,11 @@
 {
   "name": "kraft-heinz-quasar",
   "version": "0.0.1",
-  "description": "Kraft Heinz Overfill App",
-  "productName": "Kraft Heinz Overfill",
-  "author": "Ivan Germanov <ivan.germanov@cytosmart.com>",
   "private": true,
+  "description": "Kraft Heinz Overfill App",
+  "author": "Ivan Germanov <ivan.germanov@cytosmart.com>",
   "scripts": {
+    "test:unit": "vue-cli-service test:unit",
     "lint": "eslint --ext .js,.ts,.vue ./",
     "test": "echo \"No test specified\" && exit 0"
   },
@@ -21,6 +21,8 @@
     "@types/node": "^12.20.21",
     "@typescript-eslint/eslint-plugin": "^4.16.1",
     "@typescript-eslint/parser": "^4.16.1",
+    "@vue/cli-plugin-unit-jest": "~4.5.0",
+    "@vue/test-utils": "^1.0.3",
     "eslint": "^7.14.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-vue": "^7.0.0"
@@ -40,5 +42,6 @@
     "node": ">= 12.22.1",
     "npm": ">= 6.13.4",
     "yarn": ">= 1.21.1"
-  }
+  },
+  "productName": "Kraft Heinz Overfill"
 }
