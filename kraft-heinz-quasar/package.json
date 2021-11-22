@@ -5,6 +5,9 @@
   "description": "Kraft Heinz Overfill App",
   "author": "Ivan Germanov <ivan.germanov@cytosmart.com>",
   "scripts": {
+    "dev": "quasar dev",
+    "build": "quasar build",
+    "build:pwa": "quasar build -m pwa",
     "test:unit": "vue-cli-service test:unit",
     "lint": "eslint --ext .js,.ts,.vue ./",
     "test": "echo \"No test specified\" && exit 0"
