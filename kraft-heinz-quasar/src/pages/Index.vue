@@ -1,19 +1,17 @@
 <template>
   <q-page class="row items-center justify-evenly">
-    <!-- <example-component
-      title="Example component"
-      active
-      :todos="todos"
-      :meta="meta"
-    ></example-component> -->
+    <xg-boost />
   </q-page>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import XgBoost from '@/components/XgBoost.vue';
 
 export default defineComponent({
-  name: 'PageIndex',
+  components: {
+    XgBoost,
+  },
   setup() {
     return {};
   },
