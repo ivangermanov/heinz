@@ -81,7 +81,7 @@ class FeatureInstance:
         df = df.groupby(group).sum().reset_index()
         return df
 
-    def fetch(self):
+    def fetch(self, testing_only: bool):
         hourly = self.get_hourly_stats()
         cw = self.get_check_weigher()
 
@@ -178,10 +178,15 @@ class FeatureInstance:
                 Y_test.reset_index(drop=True, inplace=True)
                 X_test.reset_index(drop=True, inplace=True)
 
-                df = {
-                    "XYdates_train": [Y_train, X_train, dates_train],
-                    "XYdates_test": [Y_test, X_test, dates_test]
-                }
+                if testing_only:
+                    df = {
+                        "XYdates_test": [Y_test, X_test, dates_test]
+                    }
+                else:
+                    df = {
+                        "XYdates_train": [Y_train, X_train, dates_train],
+                        "XYdates_test": [Y_test, X_test, dates_test]
+                    }
 
             elif self.on == cn.CW_id:
                 raise ValueError("Currently no feature preprocessing is implemented for CW data granularity.")

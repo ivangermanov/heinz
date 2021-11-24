@@ -6,6 +6,7 @@ from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
 
+import numpy as np
 from pickle import load
 import config
 from bench import FeatureInstance as FI
@@ -82,7 +83,6 @@ def add_todo():
 
 # Get all todos
 
-
 @app.route('/api/todo', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_todos():
@@ -98,24 +98,26 @@ def get_todos():
                           estimator_params=config.estimator_params,
                           dummy_deploy=False)
 
-    testing_data = feature_instance.fetch()["XYdates_test"]
+    testing_data = feature_instance.fetch(testing_only=True)["XYdates_test"]
+
     dates = testing_data[2]
     current_date_idx = list(dates).index(config.CURRENT_DATE)
-    dates = dates[:current_date_idx + 2]
-    Y_true = testing_data[0][:current_date_idx + 1]
+    dates = dates[config.N_TENDENCY:current_date_idx + 2]
+    Y_true = testing_data[0][config.N_TENDENCY:current_date_idx + 1]
 
-    X_test = testing_data[1].iloc[:current_date_idx + 1, :]
+    X_test = testing_data[1].iloc[config.N_TENDENCY:current_date_idx + 1, :]
     Y_pred = model.predict(X_test.values)
 
-    X_next = X_test.iloc[current_date_idx + 1, :]
+    X_next = testing_data[1].iloc[[current_date_idx + 1]]
+
     Y_pred_next = model.predict(X_next.values)
-    date_next = dates[-1]
-    
+    date_next = list(dates)[-1]
+
     return_object = {
-        "True labels": Y_true,
-        "Predicted labels": Y_pred,
-        "Dates": dates[:-1],
-        "Next prediction": Y_pred_next,
+        "True labels": Y_true.values.tolist(),
+        "Predicted labels": Y_pred.tolist(),
+        "Dates": dates[:-1].values.tolist(),
+        "Next prediction": Y_pred_next.tolist(),
         "Next date": date_next
     }
 

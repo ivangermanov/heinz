@@ -47,5 +47,6 @@ MODEL_NAMES = {
     "Line 3": "WR3.pickle.dat"
 }
 
+N_TENDENCY = 100
 #datetime(year, month, day, hour, minute, second, microsecond)
 CURRENT_DATE = datetime(2021, 9, 27, 12, 0, 0)
