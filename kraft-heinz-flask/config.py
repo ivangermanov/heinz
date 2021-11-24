@@ -14,9 +14,14 @@ LINES_INCOMPLETE = {
 }
 INSTANCE_OFFSET = 100
 
+GRANULAR_REJECT_DATA_PATH = "data/original-format/check-weigher/"
+HOURLY_LINESTATS_DATA_PATH = "data/original-format/line-stats/"
+
+COMBINED_GRANULAR_DATA_PATH = "data/preprocessed_format/assets/check_weigher/"
+
 estimator_params = {
-    "input_lag_columns": ["Unit Weight", "Overfill"],
-    "input_lag_cw": 6,
+    #"input_lag_columns": ["Unit Weight", "Overfill"],
+    #"input_lag_cw": 6,
     "relevant_vars_HW": ['Date', 'Shift', 'Target', 'Cases Produced', 'Rejects', 'OEE',
        'Performance', 'Availability', 'Quality', 'Average Speed', 'Stops',
        'DT Events', 'MTBF', 'MTBS', 'Scheduled (min)', 'Uptime (min)',

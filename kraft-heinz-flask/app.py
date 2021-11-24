@@ -10,6 +10,7 @@ from pickle import load
 import config
 from bench import FeatureInstance as FI
 import pandas as pd
+import xgboost as xgb
 
 # Init app
 
@@ -104,10 +105,10 @@ def get_todos():
     Y_true = testing_data[0][:current_date_idx + 1]
 
     X_test = testing_data[1].iloc[:current_date_idx + 1, :]
-    Y_pred = model.predict(X_test)
+    Y_pred = model.predict(X_test.values)
 
     X_next = X_test.iloc[current_date_idx + 1, :]
-    Y_pred_next = model.predict(X_next)
+    Y_pred_next = model.predict(X_next.values)
     date_next = dates[-1]
     
     return_object = {

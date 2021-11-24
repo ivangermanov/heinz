@@ -11,6 +11,9 @@ marshmallow-sqlalchemy = "*"
 flask-cors = "*"
 marshmallow = "*"
 pandas = "*"
+xgboost = "*"
+openpyxl = "*"
+scikit-learn = "*"
 
 [dev-packages]
 autopep8 = "*"

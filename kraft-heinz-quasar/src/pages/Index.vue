@@ -6,7 +6,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import XgBoost from '@/components/XgBoost.vue';
+import XgBoost from 'src/components/XgBoost.vue';
 
 export default defineComponent({
   components: {
