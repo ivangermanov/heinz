@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 
 LINE_COUNT = 16
 LINE_COL = "Line"
@@ -41,6 +41,6 @@ MODELS_PATH = "serialized_forecasting_models/"
 MODEL_NAMES = {
     "Line 3": "WR3.pickle.dat"
 }
+
 #datetime(year, month, day, hour, minute, second, microsecond)
-#Timestamp('2021-09-27 12:00:00')
 CURRENT_DATE = datetime(2021, 9, 27, 12, 0, 0)

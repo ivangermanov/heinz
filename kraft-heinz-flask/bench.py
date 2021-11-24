@@ -1,11 +1,11 @@
 import pandas as pd
-import numpy as np
+#import numpy as np
 import os
 import config as cn
 import file_manager_helper as fmh
 from typing import Optional
 from math import floor
-from sklearn.preprocessing import MinMaxScaler
+#from sklearn.preprocessing import MinMaxScaler
 
 class FeatureInstance:
     """
