@@ -6,6 +6,11 @@ from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
 
+from pickle import load
+import config
+from bench import FeatureInstance as FI
+
+
 # Init app
 
 app = Flask(__name__)
@@ -89,16 +94,42 @@ def get_todos():
 
 # Get a single todo
 
-
 @app.route('/api/todo/<id>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def get_todo(id):
-    # get a single todo
-    todo = Todo.query.get(id)
-    # return the todo as per the schema
-    return todo_schema.jsonify(todo)
+def get_prediction(line_tag):
+    model = load(open(os.path.join(config.MODELS_PATH,
+                                   config.MODEL_NAMES[line_tag]),
+                                   "rb"))
 
-# update a todo
+    # TODO: Refactor for dummy_deploy functionality
+    feature_instance = FI(training = True,
+                          granular=False,
+                          on=config.AI_id,
+                          line = line_tag,
+                          estimator_params=config.estimator_params,
+                          dummy_deploy=False)
+
+    testing_data = feature_instance.fetch()["XYdates_test"]
+    dates = testing_data[2]
+    current_date_idx = list(dates).index(config.CURRENT_DATE)
+    dates = dates[:current_date_idx + 2]
+    Y_true = testing_data[0][:current_date_idx + 1]
+
+    X_test = testing_data[1].iloc[:current_date_idx + 1, :]
+    Y_pred = model.predict(X_test)
+
+    X_next = X_test.iloc[current_date_idx + 1, :]
+    Y_pred_next = model.predict(X_next)
+    date_next = dates[-1]
+    
+    return_object = {
+        "True labels": Y_true,
+        "Predicted labels": Y_pred,
+        "Dates": dates[:-1],
+        "Next prediction": Y_pred_next,
+        "Next date": date_next
+    }
+    return jsonify(return_object)
 
 
 @app.route('/api/todo/<id>', methods=['PUT'])
