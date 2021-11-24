@@ -102,10 +102,11 @@ def get_todos():
 
     dates = testing_data[2]
     current_date_idx = list(dates).index(config.CURRENT_DATE)
-    dates = dates[config.N_TENDENCY:current_date_idx + 2]
-    Y_true = testing_data[0][config.N_TENDENCY:current_date_idx + 1]
+    offset_idx = current_date_idx-config.N_TENDENCY
+    dates = dates[offset_idx:current_date_idx + 2]
+    Y_true = testing_data[0][offset_idx:current_date_idx + 1]
 
-    X_test = testing_data[1].iloc[config.N_TENDENCY:current_date_idx + 1, :]
+    X_test = testing_data[1].iloc[offset_idx:current_date_idx + 1, :]
     Y_pred = model.predict(X_test.values)
 
     X_next = testing_data[1].iloc[[current_date_idx + 1]]
