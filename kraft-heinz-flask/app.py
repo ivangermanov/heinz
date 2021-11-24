@@ -12,6 +12,7 @@ import config
 from bench import FeatureInstance as FI
 import pandas as pd
 import xgboost as xgb
+import json
 
 # Init app
 
@@ -102,7 +103,8 @@ def get_todos():
 
     dates = testing_data[2]
     current_date_idx = list(dates).index(config.CURRENT_DATE)
-    offset_idx = current_date_idx-config.N_TENDENCY
+    # offset_idx = current_date_idx-config.N_TENDENCY
+    offset_idx = 0
     dates = dates[offset_idx:current_date_idx + 2]
     Y_true = testing_data[0][offset_idx:current_date_idx + 1]
 
@@ -112,13 +114,13 @@ def get_todos():
     X_next = testing_data[1].iloc[[current_date_idx + 1]]
 
     Y_pred_next = model.predict(X_next.values)
-    date_next = list(dates)[-1]
+    date_next = dates.tolist()[-1]
 
     return_object = {
-        "True labels": Y_true.values.tolist(),
-        "Predicted labels": Y_pred.tolist(),
-        "Dates": dates[:-1].values.tolist(),
-        "Next prediction": Y_pred_next.tolist(),
+        "Actual": Y_true.values.tolist(),
+        "Predicted": Y_pred.tolist(),
+        "Dates": dates[:-1].tolist(),
+        "Next prediction": json.dumps(Y_pred_next[0].item()),
         "Next date": date_next
     }
 

@@ -24,10 +24,6 @@
       bordered
     >
       <q-list>
-        <!-- <q-item-label header>
-          Essential Links
-        </q-item-label> -->
-
         <EssentialLink
           v-for="link in essentialLinks"
           :key="link.title"
@@ -47,16 +43,12 @@ import EssentialLink from 'components/EssentialLink.vue';
 
 const linksList = [
   {
-    title: 'Visualization Dashboard',
-    caption: 'Graphs, charts',
-    icon: 'school',
-    // link: '',
+    title: 'Analyze',
+    icon: 'analytics',
   },
   {
-    title: 'Prediction',
-    caption: 'Machine Learning Prediction Model',
-    icon: 'favorite',
-    // link: 'https://quasar.dev',
+    title: 'Predict',
+    icon: 'insights',
   },
 ];
 
