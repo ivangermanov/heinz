@@ -90,6 +90,15 @@ file_name = 'AI_Hourly_2021.xlsx'
 
 df = pd.read_excel(os.path.join(data_path_line, file_name), )
 
+feature_instance = FI(training = True,
+                          granular=False,
+                          on=config.AI_id,
+                          line = "Line 3",
+                          estimator_params=config.estimator_params,
+                          dummy_deploy=False)
+
+testing_data = feature_instance.fetch(testing_only=True)["XYdates_test"]
+
 @app.route('/api/todo', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_todos():
@@ -98,14 +107,14 @@ def get_todos():
                                    "rb"))
 
     # TODO: Refactor for dummy_deploy functionality
-    feature_instance = FI(training = True,
-                          granular=False,
-                          on=config.AI_id,
-                          line = "Line 3",
-                          estimator_params=config.estimator_params,
-                          dummy_deploy=False)
+    #feature_instance = FI(training = True,
+    #                       granular=False,
+    #                       on=config.AI_id,
+    #                       line = "Line 3",
+    #                       estimator_params=config.estimator_params,
+    #                       dummy_deploy=False)
 
-    testing_data = feature_instance.fetch(testing_only=True)["XYdates_test"]
+    # testing_data = feature_instance.fetch(testing_only=True)["XYdates_test"]
 
     dates = testing_data[2]
     current_date_idx = list(dates).index(config.CURRENT_DATE)
