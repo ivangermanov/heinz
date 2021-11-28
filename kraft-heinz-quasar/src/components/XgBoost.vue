@@ -11,13 +11,14 @@
   </div>
   <div
     ref="chartEl"
+    id="chartEl"
     style="width: 60%; height: 500px"
   />
 </template>
 
 <script lang="ts">
 import { api } from 'src/boot/axios';
-import { defineComponent, computed, ref, watch, Ref } from 'vue';
+import { defineComponent, computed, watch, Ref, ref, shallowRef } from 'vue';
 import * as echarts from 'echarts';
 import { cloneDeep, uniq } from 'lodash';
 
@@ -1687,7 +1688,7 @@ export default defineComponent({
       return lastDate;
     });
 
-    const chart: Ref<echarts.ECharts | null> = ref(null);
+    const chart: Ref<echarts.ECharts | null> = shallowRef(null);
     const chartEl: Ref<HTMLElement | null> = ref(null);
 
     watch(
@@ -1700,7 +1701,7 @@ export default defineComponent({
 
         const option = {
           title: {
-            text: 'Cases Overfill Prediction',
+            text: 'Cases Overfill',
           },
           tooltip: {
             trigger: 'item',
@@ -1759,13 +1760,12 @@ export default defineComponent({
           ],
         };
 
-        if (chart.value != null && chart.value != undefined) {
+        if (chart.value !== null && chart.value !== undefined) {
           chart.value.dispose();
         }
 
         if (chartEl.value !== null) {
           chart.value = echarts.init(chartEl.value);
-          // chart.value.clear();
           chart.value.setOption(option);
         }
       },
