@@ -85,6 +85,11 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 
 # Get all todos
 
+data_path_line = 'data/original-format/line-stats/'
+file_name = 'AI_Hourly_2021.xlsx'
+
+df = pd.read_excel(os.path.join(data_path_line, file_name), )
+
 @app.route('/api/todo', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_todos():
@@ -127,6 +132,60 @@ def get_todos():
         "Next date": date_next,
         'mAE': mAE
     }
+
+    return jsonify(return_object)
+
+def get_values_in_time(df, start_date, end_date, line='Line 1', col1='Cases Produced', col2='Target'):
+
+    #as input df is our 'feature_instance.fetch()'
+    #print(df.columns)
+    #print(df['Line'][:20])
+    line_name = 'Line ' + str(line)
+    df = df[df['Line'] == line_name]
+    df = df[[col1, col2, 'Date']]
+    df['Date'] = pd.to_datetime(df['Date'])
+    #print(df['Date'].min())
+    #print(df['Date'].max())
+
+    df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
+
+    dic_df = dict()
+    dic_df[col1] = list(df[col1])
+    dic_df[col2] = list(df[col2])
+    dic_df['Date'] = list(df['Date'])
+
+    return dic_df
+
+@app.route('/api/target_actual_cases/<start>/<end>/<line>', methods=['GET'])
+@cross_origin(origin='*', headers=['Content-Type'])
+def get_target_actual_cases(start, end, line):
+
+    #print('start feature')
+    #print(start)
+    #print(end)
+    #print(line)
+    # TODO: Refactor for dummy_deploy functionality
+    #feature_instance = FI(training = True,
+    #                      granular=False,
+    #                      on=config.AI_id,
+    #                      line = 'Line ' + str(line),
+    #                      estimator_params=config.estimator_params,
+    #                      dummy_deploy=False)
+    #data_path_line = 'data/original-format/line-stats/'
+    #file_name = 'AI_Hourly_2021.xlsx'
+
+    #df = pd.read_excel(os.path.join(data_path_line, file_name), )
+
+
+    #print('end feature')
+
+    #print('start fetch')
+
+    #testing_data = feature_instance.fetch(testing_only=False)["XYdates_train"]
+
+    #print('end fetch')
+
+    return_object = get_values_in_time(df, start, end, line=line)
 
     return jsonify(return_object)
 

@@ -127,7 +127,7 @@ class FeatureInstance:
                 if input_lag_columns != None:
                     for column in input_lag_columns:
                         for lag in range(1, input_lag_cw):
-                            df[f"{column}_{lag}"] = df[column].shift(-lag)
+                            df[f"{column}_{lag}"] = df[column].shift(lag)
 
                 # Scaling
                 if scaling != None:
@@ -143,7 +143,8 @@ class FeatureInstance:
 
                 # Preparing label
                 if label_mold == "cummulative":
-                    df["Label"] = df[label].shift(-label_window).rolling(label_window, min_periods=1).sum().dropna()
+                    df["Label"] = df[label].shift(-1).rolling(label_window, min_periods=1).sum()
+                    df.dropna(subset = ['Label'], inplace=True)
                 elif label_mold == "point":
                     raise NotImplementedError("Predicting a point is deemed not useful rn.")
 
