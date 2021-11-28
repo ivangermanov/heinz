@@ -45,10 +45,12 @@ const linksList = [
   {
     title: 'Analyze',
     icon: 'analytics',
+    link: '/',
   },
   {
     title: 'Predict',
     icon: 'insights',
+    link: '/predict',
   },
 ];
 
