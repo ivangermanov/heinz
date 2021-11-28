@@ -13,6 +13,7 @@ from bench import FeatureInstance as FI
 import pandas as pd
 import xgboost as xgb
 import json
+from sklearn.metrics import mean_absolute_error
 
 # Init app
 
@@ -116,12 +117,15 @@ def get_todos():
     Y_pred_next = model.predict(X_next.values)
     date_next = dates.tolist()[-1]
 
+    mAE = mean_absolute_error(Y_true, Y_pred)
+
     return_object = {
         "Actual": Y_true.values.tolist(),
         "Predicted": Y_pred.tolist(),
         "Dates": dates[:-1].tolist(),
         "Next prediction": json.dumps(Y_pred_next[0].item()),
-        "Next date": date_next
+        "Next date": date_next,
+        'mAE': mAE
     }
 
     return jsonify(return_object)
