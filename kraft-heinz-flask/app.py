@@ -36,24 +36,24 @@ ma = Marshmallow(app)
 # region Set up of database models
 
 
-class Todo(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100))
-    description = db.Column(db.String(400))
+# class Todo(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     title = db.Column(db.String(100))
+#     description = db.Column(db.String(400))
 
-    def __init__(self, title, description):
-        # Add the data to the instance
-        self.title = title
-        self.description = description
-
-
-class TodoSchema(ma.Schema):
-    class Meta:
-        fields = ('id', 'title', 'description')
+#     def __init__(self, title, description):
+#         # Add the data to the instance
+#         self.title = title
+#         self.description = description
 
 
-todo_schema = TodoSchema()
-todos_schema = TodoSchema(many=True)
+# class TodoSchema(ma.Schema):
+#     class Meta:
+#         fields = ('id', 'title', 'description')
+
+
+# todo_schema = TodoSchema()
+# todos_schema = TodoSchema(many=True)
 # endregion
 
 # region Set up of routes
@@ -65,22 +65,22 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 # region Set up API
 
 
-@app.route('/api/todo', methods=['POST'])
-@cross_origin(origin='*', headers=['content-type'])
-def add_todo():
-    # get the data
-    title = request.json['title']
-    description = request.json['description']
+# @app.route('/api/todo', methods=['POST'])
+# @cross_origin(origin='*', headers=['content-type'])
+# def add_todo():
+#     # get the data
+#     title = request.json['title']
+#     description = request.json['description']
 
-    # Create an instance
-    new_todo = Todo(title, description)
+#     # Create an instance
+#     new_todo = Todo(title, description)
 
-    # Save the todo in the db
-    db.session.add(new_todo)
-    db.session.commit()
+#     # Save the todo in the db
+#     db.session.add(new_todo)
+#     db.session.commit()
 
-# return the created todo
-    return todo_schema.jsonify(new_todo)
+# # return the created todo
+#     return todo_schema.jsonify(new_todo)
 
 # Get all todos
 
@@ -131,79 +131,79 @@ def get_todos():
 
 #@app.route('/api/get_prediction', methods=['GET'])
 #@cross_origin(origin='*', headers=['Content-Type'])
-def get_prediction():
-    model = load(open(os.path.join(config.MODELS_PATH,
-                                   config.MODEL_NAMES["Line 3"]),
-                                   "rb"))
+# def get_prediction():
+#     model = load(open(os.path.join(config.MODELS_PATH,
+#                                    config.MODEL_NAMES["Line 3"]),
+#                                    "rb"))
 
-    # TODO: Refactor for dummy_deploy functionality
-    feature_instance = FI(training = True,
-                          granular=False,
-                          on=config.AI_id,
-                          line = "Line 3",
-                          estimator_params=config.estimator_params,
-                          dummy_deploy=False)
+#     # TODO: Refactor for dummy_deploy functionality
+#     feature_instance = FI(training = True,
+#                           granular=False,
+#                           on=config.AI_id,
+#                           line = "Line 3",
+#                           estimator_params=config.estimator_params,
+#                           dummy_deploy=False)
 
-    testing_data = feature_instance.fetch()["XYdates_test"]
-    dates = testing_data[2]
-    current_date_idx = list(dates).index(config.CURRENT_DATE)
-    dates = dates[:current_date_idx + 2]
-    Y_true = testing_data[0][:current_date_idx + 1]
+#     testing_data = feature_instance.fetch()["XYdates_test"]
+#     dates = testing_data[2]
+#     current_date_idx = list(dates).index(config.CURRENT_DATE)
+#     dates = dates[:current_date_idx + 2]
+#     Y_true = testing_data[0][:current_date_idx + 1]
 
-    X_test = testing_data[1].iloc[:current_date_idx + 1, :]
-    Y_pred = model.predict(X_test)
+#     X_test = testing_data[1].iloc[:current_date_idx + 1, :]
+#     Y_pred = model.predict(X_test)
 
-    X_next = X_test.iloc[current_date_idx + 1, :]
-    Y_pred_next = model.predict(X_next)
-    date_next = dates[-1]
+#     X_next = X_test.iloc[current_date_idx + 1, :]
+#     Y_pred_next = model.predict(X_next)
+#     date_next = dates[-1]
     
-    return_object = {
-        "True labels": Y_true,
-        "Predicted labels": Y_pred,
-        "Dates": dates[:-1],
-        "Next prediction": Y_pred_next,
-        "Next date": date_next
-    }
+#     return_object = {
+#         "True labels": Y_true,
+#         "Predicted labels": Y_pred,
+#         "Dates": dates[:-1],
+#         "Next prediction": Y_pred_next,
+#         "Next date": date_next
+#     }
 
-    return jsonify(return_object)
-
-
-@app.route('/api/todo/<id>', methods=['PUT'])
-@cross_origin(origin='*', headers=['Content-Type'])
-def update_todo(id):
-    # get the todo first
-    todo = Todo.query.get(id)
-    # get the data
-    title = request.json['title']
-    description = request.json['description']
-
-    # set the data
-    todo.title = title
-    todo.description = description
-
-    # commit to the database
-    db.session.commit()
-
-    # return the new todo as per the schema
-    return todo_schema.jsonify(todo)
-
-# Delete a todo
+#     return jsonify(return_object)
 
 
-@app.route('/api/todo/<id>', methods=['DELETE'])
-@cross_origin(origin='*', headers=['Content-Type'])
-def delete_todo(id):
-    # get the todo to be deleted
-    todo = Todo.query.get(id)
+# @app.route('/api/todo/<id>', methods=['PUT'])
+# @cross_origin(origin='*', headers=['Content-Type'])
+# def update_todo(id):
+#     # get the todo first
+#     todo = Todo.query.get(id)
+#     # get the data
+#     title = request.json['title']
+#     description = request.json['description']
 
-    # delete from the database
-    db.session.delete(todo)
+#     # set the data
+#     todo.title = title
+#     todo.description = description
 
-    # commit on the database
-    db.session.commit()
+#     # commit to the database
+#     db.session.commit()
 
-    # return thr deleted todo as per the schema
-    return todo_schema.jsonify(todo)
+#     # return the new todo as per the schema
+#     return todo_schema.jsonify(todo)
+
+# # Delete a todo
+
+
+# @app.route('/api/todo/<id>', methods=['DELETE'])
+# @cross_origin(origin='*', headers=['Content-Type'])
+# def delete_todo(id):
+#     # get the todo to be deleted
+#     todo = Todo.query.get(id)
+
+#     # delete from the database
+#     db.session.delete(todo)
+
+#     # commit on the database
+#     db.session.commit()
+
+#     # return thr deleted todo as per the schema
+#     return todo_schema.jsonify(todo)
 
 
 # endregion
