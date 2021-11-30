@@ -144,17 +144,12 @@ def get_todos():
 
     return jsonify(return_object)
 
-def get_values_in_time(df, start_date, end_date, line='Line 1', col1='Cases Produced', col2='Target'):
+def get_2_values_in_time(df, start_date, end_date, line='Line 1', col1='Cases Produced', col2='Target'):
 
-    #as input df is our 'feature_instance.fetch()'
-    #print(df.columns)
-    #print(df['Line'][:20])
     line_name = 'Line ' + str(line)
     df = df[df['Line'] == line_name]
     df = df[[col1, col2, 'Date']]
     df['Date'] = pd.to_datetime(df['Date'])
-    #print(df['Date'].min())
-    #print(df['Date'].max())
 
     df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
 
@@ -165,36 +160,43 @@ def get_values_in_time(df, start_date, end_date, line='Line 1', col1='Cases Prod
 
     return dic_df
 
+def get_value_in_time(df, start_date, end_date, line='Line 1', col='SKU'):
+    
+    line_name = 'Line ' + str(line)
+    df = df[df['Line'] == line_name]
+    df = df[[col, 'Date']]
+    df['Date'] = pd.to_datetime(df['Date'])
+
+    df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
+    #print(df)
+    dic_df = dict()
+    dic_df[col] = list(df[col])
+    dic_df['Date'] = list(df['Date'])
+
+    return dic_df
+
 @app.route('/api/target_actual_cases/<start>/<end>/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_target_actual_cases(start, end, line):
 
-    #print('start feature')
-    #print(start)
-    #print(end)
-    #print(line)
-    # TODO: Refactor for dummy_deploy functionality
-    #feature_instance = FI(training = True,
-    #                      granular=False,
-    #                      on=config.AI_id,
-    #                      line = 'Line ' + str(line),
-    #                      estimator_params=config.estimator_params,
-    #                      dummy_deploy=False)
-    #data_path_line = 'data/original-format/line-stats/'
-    #file_name = 'AI_Hourly_2021.xlsx'
+    return_object = get_2_values_in_time(df = df, start_date=start, end_date=end, line=line)
 
-    #df = pd.read_excel(os.path.join(data_path_line, file_name), )
+    return jsonify(return_object)
 
 
-    #print('end feature')
+@app.route('/api/sku/<start>/<end>/<line>', methods=['GET'])
+@cross_origin(origin='*', headers=['Content-Type'])
+def get_sku(start, end, line):
 
-    #print('start fetch')
+    return_object = get_value_in_time(df = df, start_date=start, end_date=end, line=line, col='SKU')
 
-    #testing_data = feature_instance.fetch(testing_only=False)["XYdates_train"]
+    return jsonify(return_object)
 
-    #print('end fetch')
+@app.route('/api/cases_produced/<start>/<end>/<line>', methods=['GET'])
+@cross_origin(origin='*', headers=['Content-Type'])
+def get_cases_produced(start, end, line):
 
-    return_object = get_values_in_time(df, start, end, line=line)
+    return_object = get_value_in_time(df = df, start_date=start, end_date=end, line=line, col='Cases Produced')
 
     return jsonify(return_object)
 
