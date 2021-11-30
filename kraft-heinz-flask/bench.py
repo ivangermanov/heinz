@@ -39,14 +39,12 @@ class FeatureInstance:
                  training: bool,
                  granular: bool,
                  on: str,
-                 dummy_deploy: bool,
                  line: str, estimator_params: Optional[dict] = None):
 
         self.training = training
         self.granular = granular
         self.line = line
         self.on = on
-        self.dummy_deploy = dummy_deploy
         self.estimator_params = estimator_params
 
     def get_check_weigher(self):
@@ -143,8 +141,10 @@ class FeatureInstance:
 
                 # Preparing label
                 if label_mold == "cummulative":
+                    #df["Label"] = df[label].shift(-label_window).rolling(label_window, min_periods=1).sum().dropna()
+                    #df["Label"] = df[label].shift(-1).rolling(label_window, min_periods=1).sum().dropna()
                     df["Label"] = df[label].shift(-1).rolling(label_window, min_periods=1).sum()
-                    df.dropna(subset = ['Label'], inplace=True)
+                    df.dropna(inplace=True)
                 elif label_mold == "point":
                     raise NotImplementedError("Predicting a point is deemed not useful rn.")
 
@@ -160,24 +160,17 @@ class FeatureInstance:
                 cutoff_point = floor(df.shape[0] * (train_mass/10))
                 dates_train = dates[:cutoff_point]
                 dates_test = dates[cutoff_point:]
-
+                dates_train.reset_index(drop=True, inplace=True)
+                dates_test.reset_index(drop=True, inplace=True)
                 X_Y_train =  df.iloc[:cutoff_point, :]
                 X_Y_test = df.iloc[cutoff_point:, :]
 
                 # Separating labels from features
-                Y_train = X_Y_train[label]
-                X_train = X_Y_train.drop(label, axis=1)
+                Y_train = X_Y_train['Label']
+                X_train = X_Y_train.drop('Label', axis=1)
 
-                Y_test = X_Y_test[label]
-                X_test = X_Y_test.drop(label, axis=1)
-    
-                # Resetting indices
-                dates_train.reset_index(drop=True, inplace=True)
-                dates_test.reset_index(drop=True, inplace=True)
-                Y_train.reset_index(drop=True, inplace=True)
-                X_train.reset_index(drop=True, inplace=True)
-                Y_test.reset_index(drop=True, inplace=True)
-                X_test.reset_index(drop=True, inplace=True)
+                Y_test = X_Y_test['Label']
+                X_test = X_Y_test.drop('Label', axis=1)
 
                 if testing_only:
                     df = {

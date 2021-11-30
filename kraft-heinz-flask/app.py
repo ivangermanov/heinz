@@ -14,6 +14,7 @@ import pandas as pd
 import xgboost as xgb
 import json
 from sklearn.metrics import mean_absolute_error
+from tensorflow import keras
 
 # Init app
 
@@ -94,15 +95,17 @@ feature_instance = FI(training = True,
                           granular=False,
                           on=config.AI_id,
                           line = "Line 1",
-                          estimator_params=config.estimator_params,
-                          dummy_deploy=False)
+                          estimator_params=config.estimator_params)
 
 testing_data = feature_instance.fetch(testing_only=True)["XYdates_test"]
 
 @app.route('/api/cases_overfill', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_cases_overfill():
-    model = load(open(os.path.join(config.MODELS_PATH,
+    if config.CURRENT_MODEL_TYPE == "lstm":
+        model = keras.models.load_model(os.path.join(config.MODELS_PATH, "keras"))
+    else:
+        model = load(open(os.path.join(config.MODELS_PATH,
                                    config.MODEL_NAMES["Line 1"]),
                                    "rb"))
 
@@ -124,11 +127,14 @@ def get_cases_overfill():
     Y_true = testing_data[0][offset_idx:current_date_idx + 1]
 
     X_test = testing_data[1].iloc[offset_idx:current_date_idx + 1, :]
-    Y_pred = model.predict(X_test.values)
+    X_test = extract_input(config.estimator_params, X_test)
+    Y_pred = model.predict(X_test)
+    Y_pred = Y_pred.flatten()
 
     X_next = testing_data[1].iloc[[current_date_idx + 1]]
+    X_next = extract_input(config.estimator_params, X_next)
 
-    Y_pred_next = model.predict(X_next.values)
+    Y_pred_next = model.predict(X_next)
     date_next = dates.tolist()[-1]
 
     mAE = mean_absolute_error(Y_true, Y_pred)
@@ -143,6 +149,31 @@ def get_cases_overfill():
     }
 
     return jsonify(return_object)
+
+def extract_input(preprocessing_params, X):
+        relevant_vars_HW = preprocessing_params["relevant_vars_HW"]
+        if "Date" in relevant_vars_HW:
+            relevant_vars_HW.remove("Date")
+        
+        ai_input = X[relevant_vars_HW]
+        
+        cw_input_cols = []
+        CW_cols = preprocessing_params["input_lag_columns"]
+        cw_input_cols.extend(CW_cols)
+        lag_cw = preprocessing_params["input_lag_cw"]
+        for lag in range(1, lag_cw):
+            for CW_col in CW_cols:
+                cw_input_cols.append(f"{CW_col}_{lag}")
+
+        cw_input = X[cw_input_cols].values
+        cw_input = np.reshape(cw_input, (cw_input.shape[0], len(CW_cols), lag_cw))
+
+        year_input = X["year"]
+        shift_input = X["Shift"]
+        dow_input = X["day of week"]
+        hour_input = X["hour"]
+
+        return [ai_input.values, cw_input, year_input, shift_input, dow_input, hour_input]
 
 def get_2_values_in_time(df, start_date, end_date, line='Line 1', col1='Cases Produced', col2='Target'):
 
