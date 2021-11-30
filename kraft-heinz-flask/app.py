@@ -93,24 +93,24 @@ df = pd.read_excel(os.path.join(data_path_line, file_name), )
 feature_instance = FI(training = True,
                           granular=False,
                           on=config.AI_id,
-                          line = "Line 3",
+                          line = "Line 1",
                           estimator_params=config.estimator_params,
                           dummy_deploy=False)
 
 testing_data = feature_instance.fetch(testing_only=True)["XYdates_test"]
 
-@app.route('/api/todo', methods=['GET'])
+@app.route('/api/cases_overfill', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def get_todos():
+def get_cases_overfill():
     model = load(open(os.path.join(config.MODELS_PATH,
-                                   config.MODEL_NAMES["Line 3"]),
+                                   config.MODEL_NAMES["Line 1"]),
                                    "rb"))
 
     # TODO: Refactor for dummy_deploy functionality
     #feature_instance = FI(training = True,
     #                       granular=False,
     #                       on=config.AI_id,
-    #                       line = "Line 3",
+    #                       line = "Line 1",
     #                       estimator_params=config.estimator_params,
     #                       dummy_deploy=False)
 
@@ -207,14 +207,14 @@ def get_cases_produced(start, end, line):
 #@cross_origin(origin='*', headers=['Content-Type'])
 # def get_prediction():
 #     model = load(open(os.path.join(config.MODELS_PATH,
-#                                    config.MODEL_NAMES["Line 3"]),
+#                                    config.MODEL_NAMES["Line 1"]),
 #                                    "rb"))
 
 #     # TODO: Refactor for dummy_deploy functionality
 #     feature_instance = FI(training = True,
 #                           granular=False,
 #                           on=config.AI_id,
-#                           line = "Line 3",
+#                           line = "Line 1",
 #                           estimator_params=config.estimator_params,
 #                           dummy_deploy=False)
 

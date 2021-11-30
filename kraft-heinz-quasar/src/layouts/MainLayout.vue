@@ -43,7 +43,7 @@ import EssentialLink from 'components/EssentialLink.vue';
 
 const linksList = [
   {
-    title: 'Analyze',
+    title: 'Graphs',
     icon: 'analytics',
     link: '/',
   },
