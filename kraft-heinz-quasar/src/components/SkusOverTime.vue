@@ -67,7 +67,7 @@ export default defineComponent({
     const computedModel = computed(() => {
       return {
         from: '08-04-2019',
-        to: '08-04-2022',
+        to: '08-09-2021',
       };
     });
 
@@ -90,7 +90,7 @@ export default defineComponent({
             },
           },
           title: {
-            text: 'SKUs Over Time',
+            text: 'SKUs Over Time - Line 3',
           },
           toolbox: {
             feature: {

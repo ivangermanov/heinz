@@ -6,10 +6,27 @@
     label-style="font-size: 1.1em"
     label-class="text-primary"
   />
+
   <div
-    class="q-gutter-md row items-start"
-    v-if="data !==null"
+    class="q-gutter-y-md column items-start"
+    v-if="data !== null"
   >
+    <q-select
+      filled
+      v-model="selectedLine"
+      label="Line"
+      :options="lines"
+      @filter="filterFn"
+      style="width: 100%"
+    >
+      <template v-slot:no-option>
+        <q-item>
+          <q-item-section class="text-grey">
+            No results
+          </q-item-section>
+        </q-item>
+      </template>
+    </q-select>
     <q-date
       v-model="model"
       range
@@ -20,7 +37,7 @@
   </div>
 
   <div
-    v-if="data !==null"
+    v-if="data !== null"
     ref="chartEl"
     style="width: 60%; height: 500px"
   />
@@ -40,15 +57,32 @@ interface XGBoostDTO {
   Predicted: number[];
 }
 
+const lineOptions = ['1', '3', '4', '5', '6', '7', '8', '11', '13', '14'];
+
 export default defineComponent({
   props: {},
   setup() {
     const data = ref(null as XGBoostDTO | null);
-    void api.get('cases_overfill').then((res) => {
-      console.log(res);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      data.value = res.data;
-    });
+    const lines = ref(lineOptions);
+    const selectedLine = ref(lineOptions[0]);
+
+    function fetch() {
+      void api.get(`cases_overfill/${selectedLine.value}`).then((res) => {
+        console.log(res);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        data.value = res.data;
+      });
+    }
+
+    fetch();
+
+    watch(
+      selectedLine,
+      () => {
+        fetch();
+      },
+      { immediate: true }
+    );
 
     const model: Ref<typeof computedModel.value | null> = ref(null);
 
@@ -200,7 +234,7 @@ export default defineComponent({
 
         const option = {
           title: {
-            text: 'Rejected Cases Next 3 Hours',
+            text: 'Rejected Cases Next 2 Hours - Line 3',
           },
           tooltip: {
             trigger: 'item',
@@ -223,7 +257,9 @@ export default defineComponent({
             type: 'category',
             data: [
               ...filteredData.value.Dates,
-              data.value ? data.value['Next date'] : [],
+              data.value
+                ? new Date(data.value['Next date']).toLocaleString('en-US')
+                : [],
             ],
             axisLabel: {
               formatter: function (value: Date) {
@@ -281,6 +317,16 @@ export default defineComponent({
       navigationMinYearMonth,
       navigationMaxYearMonth,
       data,
+      lines,
+      selectedLine,
+      filterFn(val: string, update: (arg0: () => void) => void) {
+        update(() => {
+          const needle = val.toLowerCase();
+          lines.value = lineOptions.filter(
+            (v) => v.toLowerCase().indexOf(needle) > -1
+          );
+        });
+      },
     };
   },
 });

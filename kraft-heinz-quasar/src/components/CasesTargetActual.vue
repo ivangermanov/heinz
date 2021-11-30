@@ -93,7 +93,7 @@ export default defineComponent({
             },
           },
           title: {
-            text: 'Cases - Target vs Actual',
+            text: 'Cases - Target vs Actual - Line 3',
           },
           legend: {
             data: ['Actual', 'Target'],

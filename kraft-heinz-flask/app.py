@@ -37,25 +37,6 @@ ma = Marshmallow(app)
 
 # region Set up of database models
 
-
-# class Todo(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     title = db.Column(db.String(100))
-#     description = db.Column(db.String(400))
-
-#     def __init__(self, title, description):
-#         # Add the data to the instance
-#         self.title = title
-#         self.description = description
-
-
-# class TodoSchema(ma.Schema):
-#     class Meta:
-#         fields = ('id', 'title', 'description')
-
-
-# todo_schema = TodoSchema()
-# todos_schema = TodoSchema(many=True)
 # endregion
 
 # region Set up of routes
@@ -65,73 +46,55 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 # endregion
 
 # region Set up API
-
-
-# @app.route('/api/todo', methods=['POST'])
-# @cross_origin(origin='*', headers=['content-type'])
-# def add_todo():
-#     # get the data
-#     title = request.json['title']
-#     description = request.json['description']
-
-#     # Create an instance
-#     new_todo = Todo(title, description)
-
-#     # Save the todo in the db
-#     db.session.add(new_todo)
-#     db.session.commit()
-
-# # return the created todo
-#     return todo_schema.jsonify(new_todo)
-
-# Get all todos
-
 data_path_line = 'data/original-format/line-stats/'
 file_name = 'AI_Hourly_2021.xlsx'
 
 df = pd.read_excel(os.path.join(data_path_line, file_name), )
 
-feature_instance = FI(training = True,
-                          granular=False,
-                          on=config.AI_id,
-                          line = "Line 1",
-                          estimator_params=config.estimator_params)
+feature_instances_fetched = {
+    '1': FI(training=True,
+            granular=False,
+            on=config.AI_id,
+            line="Line 1",
+            estimator_params=config.estimator_params).fetch(testing_only=True)["XYdates_test"],
+    # '2': FI(training=True,
+    #       granular=False,
+    #       on=config.AI_id,
+    #       line="Line 3",
+    #       estimator_params=config.estimator_params).fetch(testing_only=True)["XYdates_test"],
+    # '3': FI(training=True,
+    #        granular=False,
+    #        on=config.AI_id,
+    #        line="Line 4",
+    #        estimator_params=config.estimator_params).fetch(testing_only=True)["XYdates_test"]
+}
 
-testing_data = feature_instance.fetch(testing_only=True)["XYdates_test"]
 
-@app.route('/api/cases_overfill', methods=['GET'])
+@app.route('/api/cases_overfill/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def get_cases_overfill():
+def get_cases_overfill(line):
     if config.CURRENT_MODEL_TYPE == "lstm":
-        model = keras.models.load_model(os.path.join(config.MODELS_PATH, "keras"))
+        # Neural net
+        model = keras.models.load_model(
+            os.path.join(config.MODELS_PATH, "keras"))
     else:
+        # XGBoost
         model = load(open(os.path.join(config.MODELS_PATH,
-                                   config.MODEL_NAMES["Line 1"]),
-                                   "rb"))
+                                       config.MODEL_NAMES["Line 1"]),
+                          "rb"))
 
-    # TODO: Refactor for dummy_deploy functionality
-    #feature_instance = FI(training = True,
-    #                       granular=False,
-    #                       on=config.AI_id,
-    #                       line = "Line 1",
-    #                       estimator_params=config.estimator_params,
-    #                       dummy_deploy=False)
-
-    # testing_data = feature_instance.fetch(testing_only=True)["XYdates_test"]
-
-    dates = testing_data[2]
+    dates = feature_instances_fetched[line][2]
     current_date_idx = list(dates).index(config.CURRENT_DATE)
-    # offset_idx = current_date_idx-config.N_TENDENCY
     offset_idx = 0
     dates = dates[offset_idx:current_date_idx + 2]
-    Y_true = testing_data[0][offset_idx:current_date_idx + 1]
+    Y_true = feature_instances_fetched[line][0][offset_idx:current_date_idx + 1]
 
-    X_test = testing_data[1].iloc[offset_idx:current_date_idx + 1, :]
+    X_test = feature_instances_fetched[line][1].iloc[offset_idx:current_date_idx + 1, :]
     X_test = extract_input(config.estimator_params, X_test)
     Y_pred = model.predict(X_test)
     Y_pred = Y_pred.flatten()
 
-    X_next = testing_data[1].iloc[[current_date_idx + 1]]
+    X_next = feature_instances_fetched[line][1].iloc[[current_date_idx + 1]]
     X_next = extract_input(config.estimator_params, X_next)
 
     Y_pred_next = model.predict(X_next)
@@ -150,33 +113,35 @@ def get_cases_overfill():
 
     return jsonify(return_object)
 
+
 def extract_input(preprocessing_params, X):
-        relevant_vars_HW = preprocessing_params["relevant_vars_HW"]
-        if "Date" in relevant_vars_HW:
-            relevant_vars_HW.remove("Date")
-        
-        ai_input = X[relevant_vars_HW]
-        
-        cw_input_cols = []
-        CW_cols = preprocessing_params["input_lag_columns"]
-        cw_input_cols.extend(CW_cols)
-        lag_cw = preprocessing_params["input_lag_cw"]
-        for lag in range(1, lag_cw):
-            for CW_col in CW_cols:
-                cw_input_cols.append(f"{CW_col}_{lag}")
+    relevant_vars_HW = preprocessing_params["relevant_vars_HW"]
+    if "Date" in relevant_vars_HW:
+        relevant_vars_HW.remove("Date")
 
-        cw_input = X[cw_input_cols].values
-        cw_input = np.reshape(cw_input, (cw_input.shape[0], len(CW_cols), lag_cw))
+    ai_input = X[relevant_vars_HW]
 
-        year_input = X["year"]
-        shift_input = X["Shift"]
-        dow_input = X["day of week"]
-        hour_input = X["hour"]
+    cw_input_cols = []
+    CW_cols = preprocessing_params["input_lag_columns"]
+    cw_input_cols.extend(CW_cols)
+    lag_cw = preprocessing_params["input_lag_cw"]
+    for lag in range(1, lag_cw):
+        for CW_col in CW_cols:
+            cw_input_cols.append(f"{CW_col}_{lag}")
 
-        return [ai_input.values, cw_input, year_input, shift_input, dow_input, hour_input]
+    cw_input = X[cw_input_cols].values
+    cw_input = np.reshape(
+        cw_input, (cw_input.shape[0], len(CW_cols), lag_cw))
+
+    year_input = X["year"]
+    shift_input = X["Shift"]
+    dow_input = X["day of week"]
+    hour_input = X["hour"]
+
+    return [ai_input.values, cw_input, year_input, shift_input, dow_input, hour_input]
+
 
 def get_2_values_in_time(df, start_date, end_date, line='Line 1', col1='Cases Produced', col2='Target'):
-
     line_name = 'Line ' + str(line)
     df = df[df['Line'] == line_name]
     df = df[[col1, col2, 'Date']]
@@ -191,26 +156,44 @@ def get_2_values_in_time(df, start_date, end_date, line='Line 1', col1='Cases Pr
 
     return dic_df
 
+
+def get_values_in_time(df, start_date, end_date, line='Line 1', col1='Cases Produced', col2='Target'):
+    line_name = 'Line ' + str(line)
+    df = df[df['Line'] == line_name]
+    df = df[[col1, col2, 'Date']]
+    df['Date'] = pd.to_datetime(df['Date'])
+
+    df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
+
+    dic_df = dict()
+    dic_df[col1] = list(df[col1])
+    dic_df[col2] = list(df[col2])
+    dic_df['Date'] = list(df['Date'])
+
+    return dic_df
+
+
 def get_value_in_time(df, start_date, end_date, line='Line 1', col='SKU'):
-    
+
     line_name = 'Line ' + str(line)
     df = df[df['Line'] == line_name]
     df = df[[col, 'Date']]
     df['Date'] = pd.to_datetime(df['Date'])
 
     df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
-    #print(df)
+
     dic_df = dict()
     dic_df[col] = list(df[col])
     dic_df['Date'] = list(df['Date'])
 
     return dic_df
 
+
 @app.route('/api/target_actual_cases/<start>/<end>/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_target_actual_cases(start, end, line):
 
-    return_object = get_2_values_in_time(df = df, start_date=start, end_date=end, line=line)
+    return_object = get_values_in_time(df, start, end, line=line)
 
     return jsonify(return_object)
 
@@ -219,99 +202,11 @@ def get_target_actual_cases(start, end, line):
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_sku(start, end, line):
 
-    return_object = get_value_in_time(df = df, start_date=start, end_date=end, line=line, col='SKU')
+    return_object = get_value_in_time(
+        df=df, start_date=start, end_date=end, line=line, col='SKU')
 
     return jsonify(return_object)
 
-@app.route('/api/cases_produced/<start>/<end>/<line>', methods=['GET'])
-@cross_origin(origin='*', headers=['Content-Type'])
-def get_cases_produced(start, end, line):
-
-    return_object = get_value_in_time(df = df, start_date=start, end_date=end, line=line, col='Cases Produced')
-
-    return jsonify(return_object)
-
-
-# Get a single todo
-
-#@app.route('/api/get_prediction', methods=['GET'])
-#@cross_origin(origin='*', headers=['Content-Type'])
-# def get_prediction():
-#     model = load(open(os.path.join(config.MODELS_PATH,
-#                                    config.MODEL_NAMES["Line 1"]),
-#                                    "rb"))
-
-#     # TODO: Refactor for dummy_deploy functionality
-#     feature_instance = FI(training = True,
-#                           granular=False,
-#                           on=config.AI_id,
-#                           line = "Line 1",
-#                           estimator_params=config.estimator_params,
-#                           dummy_deploy=False)
-
-#     testing_data = feature_instance.fetch()["XYdates_test"]
-#     dates = testing_data[2]
-#     current_date_idx = list(dates).index(config.CURRENT_DATE)
-#     dates = dates[:current_date_idx + 2]
-#     Y_true = testing_data[0][:current_date_idx + 1]
-
-#     X_test = testing_data[1].iloc[:current_date_idx + 1, :]
-#     Y_pred = model.predict(X_test)
-
-#     X_next = X_test.iloc[current_date_idx + 1, :]
-#     Y_pred_next = model.predict(X_next)
-#     date_next = dates[-1]
-    
-#     return_object = {
-#         "True labels": Y_true,
-#         "Predicted labels": Y_pred,
-#         "Dates": dates[:-1],
-#         "Next prediction": Y_pred_next,
-#         "Next date": date_next
-#     }
-
-#     return jsonify(return_object)
-
-
-# @app.route('/api/todo/<id>', methods=['PUT'])
-# @cross_origin(origin='*', headers=['Content-Type'])
-# def update_todo(id):
-#     # get the todo first
-#     todo = Todo.query.get(id)
-#     # get the data
-#     title = request.json['title']
-#     description = request.json['description']
-
-#     # set the data
-#     todo.title = title
-#     todo.description = description
-
-#     # commit to the database
-#     db.session.commit()
-
-#     # return the new todo as per the schema
-#     return todo_schema.jsonify(todo)
-
-# # Delete a todo
-
-
-# @app.route('/api/todo/<id>', methods=['DELETE'])
-# @cross_origin(origin='*', headers=['Content-Type'])
-# def delete_todo(id):
-#     # get the todo to be deleted
-#     todo = Todo.query.get(id)
-
-#     # delete from the database
-#     db.session.delete(todo)
-
-#     # commit on the database
-#     db.session.commit()
-
-#     # return thr deleted todo as per the schema
-#     return todo_schema.jsonify(todo)
-
-
-# endregion
 
 # region Start the app
 if __name__ == '__main__':
