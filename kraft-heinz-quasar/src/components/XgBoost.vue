@@ -234,7 +234,7 @@ export default defineComponent({
 
         const option = {
           title: {
-            text: 'Rejected Cases Next 2 Hours - Line 3',
+            text: 'Rejected Cases Next 3 Hours',
           },
           tooltip: {
             trigger: 'item',
