@@ -87,34 +87,39 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 # Get all todos
 
 data_path_line = 'data/original-format/line-stats/'
-file_name = 'AI_Hourly_2021.xlsx'
+file_name = 'AI_Hourly_2021.csv'
 
-df = pd.read_excel(os.path.join(data_path_line, file_name), )
+df = pd.read_csv(os.path.join(data_path_line, file_name))
+
 
 def lazy_fetch():
     lazy_to_fetch = dict()
     for l in range(1, config.LINE_COUNT):
+        print("Lazy fetch:", l)
         if l not in config.LINES_INCOMPLETE:
             line_tag = f"Line {l}"
-            lazy_to_fetch[line_tag] = FI(training = True,
-                                            granular=False,
-                                            on=config.AI_id,
-                                            line = line_tag,
-                                            estimator_params=config.estimator_params).fetch(testing_only=True)["XYdates_test"]
-                                            
+            lazy_to_fetch[line_tag] = FI(training=True,
+                                         granular=False,
+                                         on=config.AI_id,
+                                         line=line_tag,
+                                         estimator_params=config.estimator_params).fetch(testing_only=True)["XYdates_test"]
+
     return lazy_to_fetch
 
+
 lazy_fetched = lazy_fetch()
+
 
 @app.route('/api/cases_overfill/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_cases_overfill(line):
     if config.CURRENT_MODEL_TYPE == "lstm":
-        model = keras.models.load_model(os.path.join(config.MODELS_PATH, f"Line {str(line)}"))
+        model = keras.models.load_model(os.path.join(
+            config.MODELS_PATH, f"Line {str(line)}"))
     else:
         model = load(open(os.path.join(config.MODELS_PATH,
-                                   config.MODEL_NAMES["Line 1"]),
-                                   "rb"))
+                                       config.MODEL_NAMES["Line 1"]),
+                          "rb"))
 
     dates = lazy_fetched[f"Line {line}"][2]
     current_date_idx = list(dates).index(config.CURRENT_DATE)
@@ -147,30 +152,32 @@ def get_cases_overfill(line):
 
     return jsonify(return_object)
 
+
 def extract_input(preprocessing_params, X):
-        relevant_vars_HW = preprocessing_params["relevant_vars_HW"]
-        if "Date" in relevant_vars_HW:
-            relevant_vars_HW.remove("Date")
-        
-        ai_input = X[relevant_vars_HW]
-        
-        cw_input_cols = []
-        CW_cols = preprocessing_params["input_lag_columns"]
-        cw_input_cols.extend(CW_cols)
-        lag_cw = preprocessing_params["input_lag_cw"]
-        for lag in range(1, lag_cw):
-            for CW_col in CW_cols:
-                cw_input_cols.append(f"{CW_col}_{lag}")
+    relevant_vars_HW = preprocessing_params["relevant_vars_HW"]
+    if "Date" in relevant_vars_HW:
+        relevant_vars_HW.remove("Date")
 
-        cw_input = X[cw_input_cols].values
-        cw_input = np.reshape(cw_input, (cw_input.shape[0], len(CW_cols), lag_cw))
+    ai_input = X[relevant_vars_HW]
 
-        year_input = X["year"]
-        shift_input = X["Shift"]
-        dow_input = X["day of week"]
-        hour_input = X["hour"]
+    cw_input_cols = []
+    CW_cols = preprocessing_params["input_lag_columns"]
+    cw_input_cols.extend(CW_cols)
+    lag_cw = preprocessing_params["input_lag_cw"]
+    for lag in range(1, lag_cw):
+        for CW_col in CW_cols:
+            cw_input_cols.append(f"{CW_col}_{lag}")
 
-        return [ai_input.values, cw_input, year_input, shift_input, dow_input, hour_input]
+    cw_input = X[cw_input_cols].values
+    cw_input = np.reshape(cw_input, (cw_input.shape[0], len(CW_cols), lag_cw))
+
+    year_input = X["year"]
+    shift_input = X["Shift"]
+    dow_input = X["day of week"]
+    hour_input = X["hour"]
+
+    return [ai_input.values, cw_input, year_input, shift_input, dow_input, hour_input]
+
 
 def get_2_values_in_time(df, start_date, end_date, line='Line 1', col1='Cases Produced', col2='Target'):
 
@@ -188,26 +195,29 @@ def get_2_values_in_time(df, start_date, end_date, line='Line 1', col1='Cases Pr
 
     return dic_df
 
+
 def get_value_in_time(df, start_date, end_date, line='Line 1', col='SKU'):
-    
+
     line_name = 'Line ' + str(line)
     df = df[df['Line'] == line_name]
     df = df[[col, 'Date']]
     df['Date'] = pd.to_datetime(df['Date'])
 
     df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
-    #print(df)
+    # print(df)
     dic_df = dict()
     dic_df[col] = list(df[col])
     dic_df['Date'] = list(df['Date'])
 
     return dic_df
 
+
 @app.route('/api/target_actual_cases/<start>/<end>/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_target_actual_cases(start, end, line):
 
-    return_object = get_2_values_in_time(df = df, start_date=start, end_date=end, line=line)
+    return_object = get_2_values_in_time(
+        df=df, start_date=start, end_date=end, line=line)
 
     return jsonify(return_object)
 
@@ -216,23 +226,26 @@ def get_target_actual_cases(start, end, line):
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_sku(start, end, line):
 
-    return_object = get_value_in_time(df = df, start_date=start, end_date=end, line=line, col='SKU')
+    return_object = get_value_in_time(
+        df=df, start_date=start, end_date=end, line=line, col='SKU')
 
     return jsonify(return_object)
+
 
 @app.route('/api/cases_produced/<start>/<end>/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_cases_produced(start, end, line):
 
-    return_object = get_value_in_time(df = df, start_date=start, end_date=end, line=line, col='Cases Produced')
+    return_object = get_value_in_time(
+        df=df, start_date=start, end_date=end, line=line, col='Cases Produced')
 
     return jsonify(return_object)
 
 
 # Get a single todo
 
-#@app.route('/api/get_prediction', methods=['GET'])
-#@cross_origin(origin='*', headers=['Content-Type'])
+# @app.route('/api/get_prediction', methods=['GET'])
+# @cross_origin(origin='*', headers=['Content-Type'])
 # def get_prediction():
 #     model = load(open(os.path.join(config.MODELS_PATH,
 #                                    config.MODEL_NAMES["Line 1"]),
@@ -258,7 +271,7 @@ def get_cases_produced(start, end, line):
 #     X_next = X_test.iloc[current_date_idx + 1, :]
 #     Y_pred_next = model.predict(X_next)
 #     date_next = dates[-1]
-    
+
 #     return_object = {
 #         "True labels": Y_true,
 #         "Predicted labels": Y_pred,
