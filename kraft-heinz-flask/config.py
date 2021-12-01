@@ -40,7 +40,7 @@ estimator_params = {
         "label_mold": "cummulative", # Could also be point
 }
 
-MODELS_PATH = "serialized_forecasting_models/"
+MODELS_PATH = "serialized_forecasting_models/keras/"
 
 MODEL_NAMES = {
     "Line 3": "WR3.pickle.dat",
