@@ -7,9 +7,25 @@
     label-class="text-primary"
   />
   <div
-    class="q-gutter-md row items-start"
+    class="q-gutter-y-md column items-start"
     v-if="data !==null"
   >
+    <q-select
+      filled
+      v-model="selectedLine"
+      label="Line"
+      :options="lines"
+      @filter="filterFn"
+      style="width: 100%"
+    >
+      <template v-slot:no-option>
+        <q-item>
+          <q-item-section class="text-grey">
+            No results
+          </q-item-section>
+        </q-item>
+      </template>
+    </q-select>
     <q-date
       v-model="model"
       range
@@ -35,34 +51,45 @@ interface TargetActualCasesDTO {
   SKU: string[];
 }
 
+const lineOptions = ['1', '3', '4', '5', '6', '7', '8', '11', '13', '14'];
+
 export default defineComponent({
   props: {},
   setup() {
     const data = ref(null as TargetActualCasesDTO | null);
 
     const model = ref(null as typeof computedModel.value | null);
-    const line = ref(1);
+    const lines = ref(lineOptions);
+    const selectedLine = ref(lineOptions[0]);
 
     const chart: Ref<echarts.ECharts | null> = shallowRef(null);
     const chartEl: Ref<HTMLElement | null> = ref(null);
 
+    function fetch() {
+      void api
+        .get(
+          `sku/${model.value?.from ?? ''}/${model.value?.to ?? ''}/${
+            selectedLine.value
+          }`
+        )
+        .then((res) => {
+          console.log(res);
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          data.value = res.data;
+        });
+    }
+
     watch(
       model,
       () => {
-        void api
-          .get(
-            `sku/${model.value?.from ?? ''}/${model.value?.to ?? ''}/${
-              line.value
-            }`
-          )
-          .then((res) => {
-            console.log(res);
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            data.value = res.data;
-          });
+        fetch();
       },
       { deep: true }
     );
+
+    watch(selectedLine, () => {
+      fetch();
+    });
 
     const computedModel = computed(() => {
       return {
@@ -90,7 +117,7 @@ export default defineComponent({
             },
           },
           title: {
-            text: 'SKUs Over Time - Line 3',
+            text: 'SKUs Over Time',
           },
           toolbox: {
             feature: {
@@ -144,7 +171,21 @@ export default defineComponent({
       { immediate: true, deep: true }
     );
 
-    return { data, model, chartEl };
+    return {
+      data,
+      model,
+      chartEl,
+      lines,
+      selectedLine,
+      filterFn(val: string, update: (arg0: () => void) => void) {
+        update(() => {
+          const needle = val.toLowerCase();
+          lines.value = lineOptions.filter(
+            (v) => v.toLowerCase().indexOf(needle) > -1
+          );
+        });
+      },
+    };
   },
 });
 </script>
