@@ -251,25 +251,48 @@ def get_all_skus():
 @app.route('/api/sku_overfill_heat/<sku>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_sku_overfill_heat(sku):
-    #to be replaced with specific sku from input
+
     return_object = {}
     sku = list(get_all_skus())[0]
-    return_object["Lines"] = []
-    return_object["Dates"] = []
+    return_object["Lines"] = {}
+    return_object["Date"] = {}
     return_object["data"] = []
 
+    line_counter = 0
+    date_counter = 0
+
     for line in range (1, config.LINE_COUNT):
-        df = pd.read_csv('data//preprocessed_format/hourly_perline/Line_{line}.csv')
-        if sku in df["SKU"]:
-            if line not in return_object["Lines"]:
-                return_object["Lines"].append(line)
-            df = df[df["SKU"]==sku]
-            return_object["Dates"].extend([date for date in df["Dates"] if date not in return_object["Dates"]])
+        if line not in config.LINES_INCOMPLETE:
+            df = pd.read_csv(f'kraft-heinz-flask/data/preprocessed_format/hourly_perline/Line_{line}.csv')
+            if sku in list(df["SKU"]):
+                if line not in return_object["Lines"]:
+                    return_object["Lines"][line] = line_counter
+                    line_counter += 1
 
-            #Adding data in following format [[x-coord-idx1, y-coord-idx1, overfill-value1], [x-coord-idx2, y-coord-idx2, overfill-value2], ...]
-            data = [[date, line, overfill_v] for (date, overfill_v) in zip(df["Overfill"], df["Date"])]
-            return_object["data"].extend(data)
+                df = df[df["SKU"]==sku]
 
+                for date in df["Date"]:
+                    if date not in return_object["Date"].keys():
+                        return_object["Date"][date] = date_counter
+                        date_counter += 1
+
+                #Adding data in following format [[x-coord-idx1, y-coord-idx1, overfill-value1], [x-coord-idx2, y-coord-idx2, overfill-value2], ...]
+                data = [[return_object["Date"][date], return_object["Lines"][line], overfill_v] for (overfill_v, date) in zip(df["Overfill"], df["Date"])]
+                return_object["data"].extend(data)
+
+    return_object["Date"] = list(return_object["Date"].keys())
+    return_object["Lines"] = list(return_object["Lines"].keys())
+    return jsonify(return_object)
+
+@app.route('/api/pcp/<line>', methods=['GET'])
+@cross_origin(origin='*', headers=['Content-Type'])
+def get_pcp(line):
+    return_object = {}
+    dimensions = ["Shift", "Cases Produced", "Weight Result", "Uptime (min)", "Stops", "Overfill", "OEE", "Average Speed"]
+    df = pd.read_csv('data//preprocessed_format/hourly_perline/Line_{line}.csv')
+    df = df[dimensions]
+
+    return_object["columns"] = dimensions
     return jsonify(return_object)
 
 # Get a single todo
