@@ -14,7 +14,7 @@ import pandas as pd
 import xgboost as xgb
 import json
 from sklearn.metrics import mean_absolute_error
-from tensorflow import keras
+import keras
 
 # Init app
 
@@ -106,9 +106,7 @@ def lazy_fetch():
 
     return lazy_to_fetch
 
-
 lazy_fetched = lazy_fetch()
-
 
 @app.route('/api/cases_overfill/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
@@ -130,6 +128,7 @@ def get_cases_overfill(line):
 
     X_test = lazy_fetched[f"Line {line}"][1].iloc[offset_idx:current_date_idx + 1, :]
     X_test = extract_input(config.estimator_params, X_test)
+    
     Y_pred = model.predict(X_test)
     Y_pred = Y_pred.flatten()
 
@@ -241,6 +240,37 @@ def get_cases_produced(start, end, line):
 
     return jsonify(return_object)
 
+def get_all_skus():
+    skus = set()
+    for line in range(1, config.LINE_COUNT):
+        if line not in config.LINES_INCOMPLETE:
+            df = pd.read_csv(f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
+            skus.update(df["SKU"])
+    return skus
+
+@app.route('/api/sku_overfill_heat/<sku>', methods=['GET'])
+@cross_origin(origin='*', headers=['Content-Type'])
+def get_sku_overfill_heat(sku):
+    #to be replaced with specific sku from input
+    return_object = {}
+    sku = list(get_all_skus())[0]
+    return_object["Lines"] = []
+    return_object["Dates"] = []
+    return_object["data"] = []
+
+    for line in range (1, config.LINE_COUNT):
+        df = pd.read_csv('data//preprocessed_format/hourly_perline/Line_{line}.csv')
+        if sku in df["SKU"]:
+            if line not in return_object["Lines"]:
+                return_object["Lines"].append(line)
+            df = df[df["SKU"]==sku]
+            return_object["Dates"].extend([date for date in df["Dates"] if date not in return_object["Dates"]])
+
+            #Adding data in following format [[x-coord-idx1, y-coord-idx1, overfill-value1], [x-coord-idx2, y-coord-idx2, overfill-value2], ...]
+            data = [[date, line, overfill_v] for (date, overfill_v) in zip(df["Overfill"], df["Date"])]
+            return_object["data"].extend(data)
+
+    return jsonify(return_object)
 
 # Get a single todo
 
