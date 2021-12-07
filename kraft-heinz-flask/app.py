@@ -106,7 +106,9 @@ def lazy_fetch():
 
     return lazy_to_fetch
 
+
 lazy_fetched = lazy_fetch()
+
 
 @app.route('/api/cases_overfill/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
@@ -128,7 +130,7 @@ def get_cases_overfill(line):
 
     X_test = lazy_fetched[f"Line {line}"][1].iloc[offset_idx:current_date_idx + 1, :]
     X_test = extract_input(config.estimator_params, X_test)
-    
+
     Y_pred = model.predict(X_test)
     Y_pred = Y_pred.flatten()
 
@@ -240,20 +242,28 @@ def get_cases_produced(start, end, line):
 
     return jsonify(return_object)
 
-def get_all_skus():
+
+def get_all_skus_as_list():
     skus = set()
     for line in range(1, config.LINE_COUNT):
         if line not in config.LINES_INCOMPLETE:
-            df = pd.read_csv(f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
+            df = pd.read_csv(
+                f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
             skus.update(df["SKU"])
-    return skus
+    return list(skus)
+
+
+@app.route('/api/get_all_skus', methods=['GET'])
+@cross_origin(origin='*', headers=['Content-Type'])
+def get_all_skus():
+    return jsonify(get_all_skus_as_list())
+
 
 @app.route('/api/sku_overfill_heat/<sku>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_sku_overfill_heat(sku):
 
     return_object = {}
-
     return_object["Lines"] = {}
     return_object["Date"] = {}
     return_object["data"] = []
@@ -263,23 +273,25 @@ def get_sku_overfill_heat(sku):
     max_overfill = float("-inf")
     min_overfill = float("inf")
 
-    for line in range (1, config.LINE_COUNT):
+    for line in range(1, config.LINE_COUNT):
         if line not in config.LINES_INCOMPLETE:
-            df = pd.read_csv(f'kraft-heinz-flask/data/preprocessed_format/hourly_perline/Line_{line}.csv')
+            df = pd.read_csv(
+                f'data/preprocessed_format/hourly_perline/Line_{line}.csv')
             if sku in list(df["SKU"]):
                 if line not in return_object["Lines"]:
                     return_object["Lines"][line] = line_counter
                     line_counter += 1
 
-                df = df[df["SKU"]==sku]
+                df = df[df["SKU"] == sku]
 
                 for date in df["Date"]:
                     if date not in return_object["Date"].keys():
                         return_object["Date"][date] = date_counter
                         date_counter += 1
 
-                #Adding data in following format [[x-coord-idx1, y-coord-idx1, overfill-value1], [x-coord-idx2, y-coord-idx2, overfill-value2], ...]
-                data = [[return_object["Date"][date], return_object["Lines"][line], overfill_v] for (overfill_v, date) in zip(df["Overfill"], df["Date"])]
+                # Adding data in following format [[x-coord-idx1, y-coord-idx1, overfill-value1], [x-coord-idx2, y-coord-idx2, overfill-value2], ...]
+                data = [[return_object["Date"][date], return_object["Lines"][line], overfill_v] for (
+                    overfill_v, date) in zip(df["Overfill"], df["Date"])]
                 return_object["data"].extend(data)
                 max_for_line = max(df["Overfill"])
                 min_for_line = min(df["Overfill"])
@@ -291,17 +303,20 @@ def get_sku_overfill_heat(sku):
 
     return_object["Date"] = list(return_object["Date"].keys())
     return_object["Lines"] = list(return_object["Lines"].keys())
-    return_object["min_colorcode"] = min_overfill
-    return_object["max_colorcode"] = max_overfill
-    
+    # return_object["min_colorcode"] = min_overfill
+    # return_object["max_colorcode"] = max_overfill
+
     return jsonify(return_object)
+
 
 @app.route('/api/pcp/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_pcp(line):
     return_object = {}
-    dimensions = ["Shift", "Cases Produced", "Weight Result", "Uptime (min)", "Stops", "Overfill", "OEE", "Average Speed"]
-    df = pd.read_csv('data//preprocessed_format/hourly_perline/Line_{line}.csv')
+    dimensions = ["Shift", "Cases Produced", "Weight Result",
+                  "Uptime (min)", "Stops", "Overfill", "OEE", "Average Speed"]
+    df = pd.read_csv(
+        'data//preprocessed_format/hourly_perline/Line_{line}.csv')
     df = df[dimensions]
 
     return_object["columns"] = dimensions
