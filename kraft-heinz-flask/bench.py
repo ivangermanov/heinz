@@ -76,11 +76,12 @@ class FeatureInstance:
         df[cn.DATE_COL] = pd.to_datetime(df[cn.DATE_COL])
 
         if self.granular:
-            group = [cn.DATE_COL, cn.SKU_COL]
+            group = cn.DATE_COL
         else:
             group = cn.DATE_COL
 
-        df = df.groupby(group).sum().reset_index()
+        df["SKU"] = [s.rstrip("\n") for s in df["SKU"]]
+        #df = df.groupby(group).sum().reset_index()
         return df
 
     def fetch(self, testing_only: bool):
@@ -99,7 +100,7 @@ class FeatureInstance:
                 df = pd.merge(hourly, cw,
                               left_on=cn.DATE_COL,
                               right_on=f"{cn.DATE_COL}_temp",
-                              how="right").dropna()
+                              how="inner").dropna()
                 df.drop([f"{cn.DATE_COL}_temp", f"{cn.DATE_COL}_x"],
                         axis=1, inplace=True)
 
@@ -233,8 +234,8 @@ estimator_params = {
 }
 
 # FI = FeatureInstance(
-#     training=True,
-#     granular=False,
+#     training=False,
+#     granular=Fasl,
 #     on=cn.AI_id,
 #     line="Line 1",
 #     estimator_params=estimator_params
