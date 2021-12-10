@@ -33,6 +33,16 @@ const routes: RouteRecordRaw[] = [
       { path: '/predict', component: () => import('pages/Predict.vue') },
     ],
   },
+  {
+    path: '/skus-heatmap',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '/skus-heatmap',
+        component: () => import('pages/SkusHeatmap.vue'),
+      },
+    ],
+  },
   // Always leave this as last one,
   // but you can also remove it
   {

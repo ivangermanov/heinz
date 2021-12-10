@@ -303,8 +303,8 @@ def get_sku_overfill_heat(sku):
 
     return_object["Date"] = list(return_object["Date"].keys())
     return_object["Lines"] = list(return_object["Lines"].keys())
-    # return_object["min_colorcode"] = min_overfill
-    # return_object["max_colorcode"] = max_overfill
+    return_object["min_colorcode"] = min_overfill
+    return_object["max_colorcode"] = max_overfill
 
     return jsonify(return_object)
 

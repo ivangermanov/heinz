@@ -44,6 +44,28 @@
         </q-card-section>
       </router-link>
     </q-card>
+    <!-- SKU heatmap -->
+    <q-card
+      class="col-3 cursor-pointer q-hoverable "
+      v-ripple
+    >
+      <router-link
+        to="/skus-heatmap"
+        style="text-decoration: none; color: inherit;"
+      >
+        <q-card-section>
+          <div class="column items-center justify-center">
+            <q-img
+              src="skus-heatmap.png"
+              spinner-color="white"
+            />
+            <span class="q-pt-md non-selectable">
+              SKUs Heatmap
+            </span>
+          </div>
+        </q-card-section>
+      </router-link>
+    </q-card>
   </q-page>
 </template>
 
