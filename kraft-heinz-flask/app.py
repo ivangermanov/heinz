@@ -245,7 +245,7 @@ def full_sku(row):
 
 
 def add_sku_type(df):
-    data_path_2 = 'C:/Users/Kacper/Desktop/kraft-heinz-poc/data/preprocessed_format'
+    data_path_2 = 'data'
     Book1_file_path = 'Book1.xlsx'
 
     df_b = pd.read_excel(os.path.join(data_path_2, Book1_file_path))
