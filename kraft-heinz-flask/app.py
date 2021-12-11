@@ -213,6 +213,65 @@ def get_value_in_time(df, start_date, end_date, line='Line 1', col='SKU'):
     return dic_df
 
 
+def Average_Speed_vs_overfill(begin_date, end_date, line):
+    df = pd.read_csv(f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
+    df_l = df.loc[(df["Date"] > begin_date) & (df["Date"] < end_date)]
+    
+    df_g = df_l[['Cases Produced', 'Weight Result', 'Overfill']].groupby(pd.cut(df_l["Average Speed"], np.arange(0, 115, 5))).sum() #5000 becasue of max, doesnt matter anyways
+    df_g_col = df_l[['Cases Produced', 'Weight Result', 'Overfill']].groupby(pd.cut(df_l["Average Speed"], np.arange(0, 115, 5))).size()
+    df_g['Amount of hours run on this Average Speed'] = df_g_col
+
+    #x-axis is average speed in agg bins, it is 110 instead of 115 because cut function returns one value less
+    x_axis = np.arange(0,110, 5)
+
+    #y-axis contains all of the data we have on check-weigher
+    #choose one of the 2
+    #1
+    y_axis_cases_produced = df_g['Cases Produced']
+    y_axis_amount_of_overfill_cases = df_g['Weight Result']
+
+    #2
+    y_axis_overfill = df_g['Overfill']
+
+    #and on 2nd y axis we have:
+    #hours spend on this setting (which is not true due to aggregation but lets ignore that)
+    y_axis_time_spend = df_g['Amount of hours run on this Average Speed']
+
+    return x_axis, y_axis_cases_produced, y_axis_amount_of_overfill_cases, y_axis_overfill, y_axis_time_spend
+
+
+def full_sku(row):
+    return str(row['index']) + ' - ' + str(row[4])
+
+
+def add_sku_type(df):
+    data_path_2 = 'C:/Users/Kacper/Desktop/kraft-heinz-poc/data/preprocessed_format'
+    Book1_file_path = 'Book1.xlsx'
+
+    df_b = pd.read_excel(os.path.join(data_path_2, Book1_file_path))
+    df_b = df_b.transpose()
+    df_b = df_b.reset_index()
+
+    df_b['SKU'] = df_b.apply(lambda row: full_sku(row), axis=1)
+
+    df_b_p = df_b[['SKU', 0]]
+
+    df = df.merge(df_b_p, how='left', left_on='SKU', right_on='SKU')
+
+    df.rename(columns={0: 'SKU_type'}, inplace=True)
+
+    return df
+
+
+@app.route('/api/average_vs_overfill/<start>/<end>/<line>', methods=['GET'])
+@cross_origin(origin='*', headers=['Content-Type'])
+def average_vs_overfill(start, end, line):
+
+    return_object = Average_Speed_vs_overfill(start, end, line)
+
+    return jsonify(return_object)
+
+
 @app.route('/api/target_actual_cases/<start>/<end>/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_target_actual_cases(start, end, line):
