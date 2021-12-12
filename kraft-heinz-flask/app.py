@@ -279,7 +279,6 @@ def get_sku_overfill_heat(sku):
                 f'data/preprocessed_format/hourly_perline/Line_{line}.csv')
 
             df["Date"] = pd.to_datetime(df["Date"])
-            df.sort_values(by=["Date"], inplace=True)
             if sku in list(df["SKU"]):
                 if line not in return_object["Lines"]:
                     return_object["Lines"][line] = line_counter
@@ -295,6 +294,8 @@ def get_sku_overfill_heat(sku):
                 # Adding data in following format [[x-coord-idx1, y-coord-idx1, overfill-value1], [x-coord-idx2, y-coord-idx2, overfill-value2], ...]
                 data = [[return_object["Date"][date], return_object["Lines"][line], overfill_v] for (
                     overfill_v, date) in zip(df["Overfill"], df["Date"])]
+
+                data = sorted(data)
                 return_object["data"].extend(data)
                 max_for_line = max(df["Overfill"])
                 min_for_line = min(df["Overfill"])
