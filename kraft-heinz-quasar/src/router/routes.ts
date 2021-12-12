@@ -43,6 +43,16 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
+  {
+    path: '/line-overfill-heatmap',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '/line-overfill-heatmap',
+        component: () => import('src/pages/LineOverfillHeatmap.vue'),
+      },
+    ],
+  },
   // Always leave this as last one,
   // but you can also remove it
   {

@@ -60,7 +60,6 @@ export default defineComponent({
     const data = ref(null as TargetActualCasesDTO | null);
 
     const model = ref(null as typeof computedModel.value | null);
-    // TODO: Pass actual line
     const lines = ref(lineOptions);
     const selectedLine = ref(lineOptions[0]);
 

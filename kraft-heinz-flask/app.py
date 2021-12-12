@@ -103,7 +103,7 @@ def lazy_fetch():
                                          on=config.AI_id,
                                          line=line_tag,
                                          estimator_params=config.estimator_params,
-                                         quarterly = False).fetch(testing_only=True)["XYdates_test"]
+                                         quarterly=False).fetch(testing_only=True)["XYdates_test"]
 
     return lazy_to_fetch
 
@@ -259,9 +259,11 @@ def get_all_skus_as_list():
 def get_all_skus():
     return jsonify(get_all_skus_as_list())
 
-@app.route('/api/sku_overfill_heat/<sku>', methods=['GET'])
+
+@app.route('/api/sku_overfill_heat/<sku>/<quarterly>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def get_sku_overfill_heat(sku, quarterly: bool):
+def get_sku_overfill_heat(sku: str, quarterly: str):
+    quarterly = quarterly == "true"
 
     return_object = {}
     return_object["Lines"] = {}
@@ -314,14 +316,19 @@ def get_sku_overfill_heat(sku, quarterly: bool):
     return_object["data"] = data
     return_object["Date"] = list(return_object["Date"].keys())
     return_object["Lines"] = list(return_object["Lines"].keys())
-    return_object["min_colorcode"] = min_overfill
-    return_object["max_colorcode"] = max_overfill
+    return_object["min_colorcode"] = 0 if min_overfill == float(
+        "inf") else min_overfill
+    return_object["max_colorcode"] = 0 if max_overfill == float(
+        "-inf") else max_overfill
 
     return jsonify(return_object)
 
-@app.route('/api/line_overfill_heat/<line>', methods=['GET'])
+
+@app.route('/api/line_overfill_heat/<line>/<quarterly>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def get_line_overfill_heat(line, quarterly: bool):
+def get_line_overfill_heat(line: str, quarterly: str):
+    quarterly = quarterly == "true"
+
     return_object = {}
     return_object["SKUs"] = {}
     return_object["Date"] = {}
@@ -337,7 +344,7 @@ def get_line_overfill_heat(line, quarterly: bool):
         else:
             df = pd.read_csv(
                 f'data/preprocessed_format/hourly_perline/Line_{line}.csv')
-        
+
         df["Date"] = pd.to_datetime(df["Date"])
 
     max_overfill = max(df["Overfill"])
@@ -349,7 +356,7 @@ def get_line_overfill_heat(line, quarterly: bool):
             return_object["SKUs"][sku] = sku_counter
             sku_counter += 1
 
-        df_temp_sku = df[df["SKU"]==sku]
+        df_temp_sku = df[df["SKU"] == sku]
         # Adding data in following format [[x-coord-idx1, y-coord-idx1, overfill-value1], [x-coord-idx2, y-coord-idx2, overfill-value2], ...]
         data_temp = [[date, return_object["SKUs"][sku], overfill_v] for (
             overfill_v, date) in zip(df_temp_sku["Overfill"], df_temp_sku["Date"])]

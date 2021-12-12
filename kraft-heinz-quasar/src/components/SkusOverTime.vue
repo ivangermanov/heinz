@@ -116,6 +116,7 @@ export default defineComponent({
               type: 'shadow',
             },
           },
+          grid: { left: '200px' },
           title: {
             text: 'SKUs Over Time',
           },
@@ -145,6 +146,11 @@ export default defineComponent({
           yAxis: {
             name: 'SKU',
             type: 'category',
+            axisLabel: {
+              margin: 20,
+              width: 180,
+              overflow: 'truncate',
+            },
           },
           series: [
             {

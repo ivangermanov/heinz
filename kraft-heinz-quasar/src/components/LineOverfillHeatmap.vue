@@ -29,9 +29,9 @@
     />
     <q-select
       use-input
-      v-model="selectedSku"
-      label="SKU"
-      :options="skus"
+      v-model="selectedLine"
+      label="Line"
+      :options="lines"
       @filter="filterFn"
       style="width: 300px"
     >
@@ -52,6 +52,7 @@
   />
 </template>
 
+
 <script lang="ts">
 import { api } from 'src/boot/axios';
 import {
@@ -65,22 +66,23 @@ import {
 } from 'vue';
 import * as echarts from 'echarts';
 
-interface SkuOverfillHeatmapDTO {
+interface LineOverfillHeatmapDTO {
   Date: string[];
-  Lines: string[];
+  SKUs: string[];
   data: number[][];
   max_colorcode: number;
   min_colorcode: number;
 }
 
+const lineOptions = ['1', '3', '4', '5', '6', '7', '8', '11', '13', '14'];
+
 export default defineComponent({
   props: {},
   setup() {
-    const data = ref(null as SkuOverfillHeatmapDTO | null);
+    const data = ref(null as LineOverfillHeatmapDTO | null);
     const isFetching = ref(true);
-    const skuOptions = ref<string[]>([]);
-    const skus = ref(skuOptions.value);
-    const selectedSku = ref(skuOptions.value[0]);
+    const lines = ref(lineOptions);
+    const selectedLine = ref(lineOptions[0]);
 
     const isQuarterly = ref(false);
 
@@ -95,23 +97,11 @@ export default defineComponent({
       });
     });
 
-    onBeforeMount(() => {
-      fetchAllSkus();
-    });
-
-    function fetchAllSkus() {
-      void api.get('/get_all_skus').then((res) => {
-        console.log(res);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        skuOptions.value = res.data;
-      });
-    }
-
     function fetchHeatmap() {
       isFetching.value = true;
       void api
         .get(
-          `/sku_overfill_heat/${selectedSku.value}/${
+          `/line_overfill_heat/${selectedLine.value}/${
             isQuarterly.value ? 'true' : 'false'
           }`
         )
@@ -123,13 +113,11 @@ export default defineComponent({
         });
     }
 
-    watch(selectedSku, () => {
+    onBeforeMount(() => {
       fetchHeatmap();
     });
 
-    watch(skuOptions, () => {
-      skus.value = skuOptions.value;
-      selectedSku.value = skuOptions.value[0];
+    watch(selectedLine, () => {
       fetchHeatmap();
     });
 
@@ -142,11 +130,12 @@ export default defineComponent({
       () => {
         const option = {
           title: {
-            text: 'Heatmap of SKU Overfill Over Time',
+            text: 'Heatmap of Line Overfill Over Time',
           },
           tooltip: {
             position: 'top',
           },
+          grid: { left: '200px' },
           xAxis: {
             type: 'category',
             data: data.value?.Date.map((date) =>
@@ -158,10 +147,15 @@ export default defineComponent({
           },
           yAxis: {
             type: 'category',
-            name: 'Line',
-            data: data.value?.Lines,
+            name: 'SKU',
+            data: data.value?.SKUs,
             splitArea: {
               show: true,
+            },
+            axisLabel: {
+              margin: 20,
+              width: 180,
+              overflow: 'truncate',
             },
           },
           visualMap: {
@@ -218,14 +212,13 @@ export default defineComponent({
       data,
       isFetching,
       chartEl,
-      skuOptions,
-      skus,
-      selectedSku,
+      lines,
+      selectedLine,
       isQuarterly,
       filterFn(val: string, update: (arg0: () => void) => void) {
         update(() => {
           const needle = val.toLowerCase();
-          skus.value = skuOptions.value.filter(
+          lines.value = lineOptions.filter(
             (v) => v.toLowerCase().indexOf(needle) > -1
           );
         });
