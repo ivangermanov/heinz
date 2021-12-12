@@ -91,7 +91,6 @@ file_name = 'AI_Hourly_2021.csv'
 
 df = pd.read_csv(os.path.join(data_path_line, file_name))
 
-
 def lazy_fetch():
     lazy_to_fetch = dict()
     for l in range(1, config.LINE_COUNT):
@@ -102,8 +101,8 @@ def lazy_fetch():
                                          granular=False,
                                          on=config.AI_id,
                                          line=line_tag,
-                                         estimator_params=config.estimator_params,
-                                         quarterly = False).fetch(testing_only=True)["XYdates_test"]
+                                         quarterly=False,
+                                         estimator_params=config.estimator_params).fetch(testing_only=True)["XYdates_test"]
 
     return lazy_to_fetch
 
@@ -431,18 +430,29 @@ def get_line_overfill_heat(line, quarterly: bool):
 
     return jsonify(return_object)
 
+# Possible dimensions to include for the PCP
+@app.route('/api/get_ai_cw_cols/', methods=['GET'])
+@cross_origin(origin='*', headers=['Content-Type'])
+def get_cols():
+    return jsonify(list(config.AI_CW_COLS))
 
+# PCP
 @app.route('/api/pcp/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def get_pcp(line):
+def get_pcp(line, dimensions):
     return_object = {}
-    dimensions = ["Shift", "Cases Produced", "Weight Result",
-                  "Uptime (min)", "Stops", "Overfill", "OEE", "Average Speed"]
     df = pd.read_csv(
-        'data//preprocessed_format/hourly_perline/Line_{line}.csv')
+        f'data/preprocessed_format/hourly_perline/Line_{line}.csv')
     df = df[dimensions]
+    df = df.values.tolist()
 
+    schema = []
+    for idx, d in enumerate(dimensions):
+        schema.append({"name": d, "index": idx, "text": d})
+
+    return_object["schema"] = schema
     return_object["columns"] = dimensions
+    return_object["raw_data"] = df
     return jsonify(return_object)
 
 # Get a single todo
