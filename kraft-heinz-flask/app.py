@@ -181,8 +181,9 @@ def extract_input(preprocessing_params, X):
     return [ai_input.values, cw_input, year_input, shift_input, dow_input, hour_input]
 
 
-def get_2_values_in_time(df, start_date, end_date, line='Line 1', col1='Cases Produced', col2='Target'):
-
+def get_2_values_in_time(start_date, end_date, line='1', col1='Cases Produced', col2='Target'):
+    df = pd.read_csv(
+        f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
     line_name = 'Line ' + str(line)
     df = df[df['Line'] == line_name]
     df = df[[col1, col2, 'Date']]
@@ -198,8 +199,9 @@ def get_2_values_in_time(df, start_date, end_date, line='Line 1', col1='Cases Pr
     return dic_df
 
 
-def get_value_in_time(df, start_date, end_date, line='Line 1', col='SKU'):
-
+def get_value_in_time(start_date, end_date, line='1', col='SKU'):
+    df = pd.read_csv(
+        f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
     line_name = 'Line ' + str(line)
     df = df[df['Line'] == line_name]
     df = df[[col, 'Date']]
@@ -214,12 +216,75 @@ def get_value_in_time(df, start_date, end_date, line='Line 1', col='SKU'):
     return dic_df
 
 
+def Average_Speed_vs_overfill(begin_date, end_date, line):
+    df = pd.read_csv(
+        f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
+    df_l = df.loc[(df["Date"] > begin_date) & (df["Date"] < end_date)]
+
+    df_g = df_l[['Cases Produced', 'Weight Result', 'Overfill']].groupby(pd.cut(
+        df_l["Average Speed"], np.arange(0, 115, 5))).sum()  # 5000 becasue of max, doesnt matter anyways
+    df_g_col = df_l[['Cases Produced', 'Weight Result', 'Overfill']].groupby(
+        pd.cut(df_l["Average Speed"], np.arange(0, 115, 5))).size()
+    df_g['Amount of hours run on this Average Speed'] = df_g_col
+
+    output = dict()
+    # x-axis is average speed in agg bins, it is 110 instead of 115 because cut function returns one value less
+    output['x_axis'] = np.arange(0, 110, 5).tolist()
+
+    # y-axis contains all of the data we have on check-weigher
+    # choose one of the 2
+    # 1
+    output['y_axis_cases_produced'] = df_g['Cases Produced'].to_json()
+    output['y_axis_amount_of_overfill_cases'] = df_g['Weight Result'].to_json()
+
+    # 2
+    output['y_axis_overfill'] = df_g['Overfill'].to_json()
+
+    # and on 2nd y axis we have:
+    # hours spend on this setting (which is not true due to aggregation but lets ignore that)
+    output['y_axis_time_spend'] = df_g['Amount of hours run on this Average Speed'].to_json()
+
+    return output
+
+
+def full_sku(row):
+    return str(row['index']) + ' - ' + str(row[4])
+
+
+def add_sku_type(df):
+    data_path_2 = 'data'
+    Book1_file_path = 'Book1.xlsx'
+
+    df_b = pd.read_excel(os.path.join(data_path_2, Book1_file_path))
+    df_b = df_b.transpose()
+    df_b = df_b.reset_index()
+
+    df_b['SKU'] = df_b.apply(lambda row: full_sku(row), axis=1)
+
+    df_b_p = df_b[['SKU', 0]]
+
+    df = df.merge(df_b_p, how='left', left_on='SKU', right_on='SKU')
+
+    df.rename(columns={0: 'SKU_type'}, inplace=True)
+
+    return df
+
+
+@app.route('/api/average_vs_overfill/<start>/<end>/<line>', methods=['GET'])
+@cross_origin(origin='*', headers=['Content-Type'])
+def average_vs_overfill(start, end, line):
+
+    return_object = Average_Speed_vs_overfill(start, end, line)
+
+    return jsonify(return_object)
+
+
 @app.route('/api/target_actual_cases/<start>/<end>/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_target_actual_cases(start, end, line):
 
     return_object = get_2_values_in_time(
-        df=df, start_date=start, end_date=end, line=line)
+        start_date=start, end_date=end, line=line)
 
     return jsonify(return_object)
 
@@ -229,7 +294,7 @@ def get_target_actual_cases(start, end, line):
 def get_sku(start, end, line):
 
     return_object = get_value_in_time(
-        df=df, start_date=start, end_date=end, line=line, col='SKU')
+        start_date=start, end_date=end, line=line, col='SKU')
 
     return jsonify(return_object)
 
@@ -239,7 +304,7 @@ def get_sku(start, end, line):
 def get_cases_produced(start, end, line):
 
     return_object = get_value_in_time(
-        df=df, start_date=start, end_date=end, line=line, col='Cases Produced')
+        start_date=start, end_date=end, line=line, col='Cases Produced')
 
     return jsonify(return_object)
 
@@ -379,18 +444,29 @@ def get_line_overfill_heat(line: str, quarterly: str):
 
     return jsonify(return_object)
 
+# Possible dimensions to include for the PCP
+@app.route('/api/get_ai_cw_cols/', methods=['GET'])
+@cross_origin(origin='*', headers=['Content-Type'])
+def get_cols():
+    return jsonify(list(config.AI_CW_COLS))
 
+# PCP
 @app.route('/api/pcp/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def get_pcp(line):
+def get_pcp(line, dimensions):
     return_object = {}
-    dimensions = ["Shift", "Cases Produced", "Weight Result",
-                  "Uptime (min)", "Stops", "Overfill", "OEE", "Average Speed"]
     df = pd.read_csv(
-        'data//preprocessed_format/hourly_perline/Line_{line}.csv')
+        f'data/preprocessed_format/hourly_perline/Line_{line}.csv')
     df = df[dimensions]
+    df = df.values.tolist()
 
+    schema = []
+    for idx, d in enumerate(dimensions):
+        schema.append({"name": d, "index": idx, "text": d})
+
+    return_object["schema"] = schema
     return_object["columns"] = dimensions
+    return_object["raw_data"] = df
     return jsonify(return_object)
 
 # Get a single todo

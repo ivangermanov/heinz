@@ -41,6 +41,13 @@ estimator_params = {
         "label_mold": "cummulative", # Could also be point
 }
 
+AI_CW_COLS = {
+    'Line', 'Date', 'Shift', 'SKU', 'Target', 'Cases Produced', 'Rejects',
+    'OEE', 'Performance', 'Availability', 'Quality', 'Average Speed',
+    'Stops', 'DT Events', 'MTBF', 'MTBS', 'Scheduled (min)', 'Uptime (min)',
+    'Starved (min)', 'Backed Up (min)', 'Idle (min)', 'Faulted (min)', 'LO',
+    'Unit Weight', 'Overfill', 'Weight Result'
+}
 MODELS_PATH = "serialized_forecasting_models/keras/"
 
 MODEL_NAMES = {
