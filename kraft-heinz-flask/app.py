@@ -277,6 +277,9 @@ def get_sku_overfill_heat(sku):
         if line not in config.LINES_INCOMPLETE:
             df = pd.read_csv(
                 f'data/preprocessed_format/hourly_perline/Line_{line}.csv')
+
+            df["Date"] = pd.to_datetime(df["Date"])
+            df.sort_values(by=["Date"], inplace=True)
             if sku in list(df["SKU"]):
                 if line not in return_object["Lines"]:
                     return_object["Lines"][line] = line_counter
