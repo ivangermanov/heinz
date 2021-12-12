@@ -102,7 +102,8 @@ def lazy_fetch():
                                          granular=False,
                                          on=config.AI_id,
                                          line=line_tag,
-                                         estimator_params=config.estimator_params).fetch(testing_only=True)["XYdates_test"]
+                                         estimator_params=config.estimator_params,
+                                         quarterly = False).fetch(testing_only=True)["XYdates_test"]
 
     return lazy_to_fetch
 
