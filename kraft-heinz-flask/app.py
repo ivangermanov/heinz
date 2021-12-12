@@ -221,23 +221,24 @@ def Average_Speed_vs_overfill(begin_date, end_date, line):
     df_g_col = df_l[['Cases Produced', 'Weight Result', 'Overfill']].groupby(pd.cut(df_l["Average Speed"], np.arange(0, 115, 5))).size()
     df_g['Amount of hours run on this Average Speed'] = df_g_col
 
+    output = dict()
     #x-axis is average speed in agg bins, it is 110 instead of 115 because cut function returns one value less
-    x_axis = np.arange(0,110, 5)
+    output['x_axis'] = np.arange(0,110, 5).tolist()
 
     #y-axis contains all of the data we have on check-weigher
     #choose one of the 2
     #1
-    y_axis_cases_produced = df_g['Cases Produced']
-    y_axis_amount_of_overfill_cases = df_g['Weight Result']
+    output['y_axis_cases_produced'] = df_g['Cases Produced'].to_json()
+    output['y_axis_amount_of_overfill_cases'] = df_g['Weight Result'].to_json()
 
     #2
-    y_axis_overfill = df_g['Overfill']
+    output['y_axis_overfill'] = df_g['Overfill'].to_json()
 
     #and on 2nd y axis we have:
     #hours spend on this setting (which is not true due to aggregation but lets ignore that)
-    y_axis_time_spend = df_g['Amount of hours run on this Average Speed']
+    output['y_axis_time_spend'] = df_g['Amount of hours run on this Average Speed'].to_json()
 
-    return x_axis, y_axis_cases_produced, y_axis_amount_of_overfill_cases, y_axis_overfill, y_axis_time_spend
+    return output
 
 
 def full_sku(row):
