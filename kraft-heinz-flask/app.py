@@ -219,10 +219,11 @@ def get_value_in_time(start_date, end_date, line='1', col='SKU'):
 def Average_Speed_vs_overfill(begin_date, end_date, line):
     df = pd.read_csv(
         f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
-    df_l = df.loc[(df["Date"] > begin_date) & (df["Date"] < end_date)]
+    df['Date'] = pd.to_datetime(df['Date'])
+    df_l = df[(df["Date"] >= begin_date) & (df["Date"] <= end_date)]
     df_l['Overfill'] = df_l['Overfill'].abs()
     df_g = df_l[['Cases Produced', 'Weight Result', 'Overfill']].groupby(pd.cut(
-        df_l["Average Speed"], np.arange(0, 115, 5))).sum()  # 5000 becasue of max, doesnt matter anyways
+        df_l["Average Speed"], np.arange(0, 115, 5))).sum()  # 5000 because of max, doesn't matter anyways
     df_g_col = df_l[['Cases Produced', 'Weight Result', 'Overfill']].groupby(
         pd.cut(df_l["Average Speed"], np.arange(0, 115, 5))).size()
     df_g['Amount of hours run on this Average Speed'] = df_g_col
@@ -234,15 +235,16 @@ def Average_Speed_vs_overfill(begin_date, end_date, line):
     # y-axis contains all of the data we have on check-weigher
     # choose one of the 2
     # 1
-    output['y_axis_cases_produced'] = df_g['Cases Produced'].to_json()
-    output['y_axis_amount_of_overfill_cases'] = df_g['Weight Result'].to_json()
+    output['y_axis_cases_produced'] = list(df_g['Cases Produced'])
+    output['y_axis_amount_of_overfill_cases'] = list(df_g['Weight Result'])
 
     # 2
-    output['y_axis_overfill'] = df_g['Overfill'].to_json()
+    output['y_axis_overfill'] = list(df_g['Overfill'])
 
     # and on 2nd y axis we have:
     # hours spend on this setting (which is not true due to aggregation but lets ignore that)
-    output['y_axis_time_spend'] = df_g['Amount of hours run on this Average Speed'].to_json()
+    output['y_axis_time_spend'] = list(
+        df_g['Amount of hours run on this Average Speed'])
 
     return output
 
@@ -445,12 +447,16 @@ def get_line_overfill_heat(line: str, quarterly: str):
     return jsonify(return_object)
 
 # Possible dimensions to include for the PCP
+
+
 @app.route('/api/get_ai_cw_cols/', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_cols():
     return jsonify(list(config.AI_CW_COLS))
 
 # PCP
+
+
 @app.route('/api/pcp/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_pcp(line, dimensions):

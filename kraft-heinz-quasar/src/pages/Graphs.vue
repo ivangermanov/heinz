@@ -88,6 +88,28 @@
         </q-card-section>
       </router-link>
     </q-card>
+    <!-- Bar Line Average Speed -->
+    <q-card
+      class="col-3 cursor-pointer q-hoverable "
+      v-ripple
+    >
+      <router-link
+        to="/bar-line-average-speed"
+        style="text-decoration: none; color: inherit;"
+      >
+        <q-card-section>
+          <div class="column items-center justify-center">
+            <q-img
+              src="bar-line-average-speed.png"
+              spinner-color="white"
+            />
+            <span class="q-pt-md non-selectable">
+              Bar Line Average Speed
+            </span>
+          </div>
+        </q-card-section>
+      </router-link>
+    </q-card>
     <!-- PCP -->
     <q-card
       class="col-3 cursor-pointer q-hoverable "

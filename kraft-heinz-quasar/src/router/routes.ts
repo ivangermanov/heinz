@@ -53,6 +53,16 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
+  {
+    path: '/bar-line-average-speed',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '/bar-line-average-speed',
+        component: () => import('src/pages/BarLineAverageSpeed.vue'),
+      },
+    ],
+  },
   // Always leave this as last one,
   // but you can also remove it
   {
