@@ -281,7 +281,7 @@ def get_sku_overfill_heat(sku):
     for line in range(1, config.LINE_COUNT):
         if line not in config.LINES_INCOMPLETE:
             df = pd.read_csv(
-                f'kraft-heinz-flask/data/preprocessed_format/hourly_perline/Line_{line}.csv')
+                f'data/preprocessed_format/hourly_perline/Line_{line}.csv')
 
             df["Date"] = pd.to_datetime(df["Date"])
             if sku in list(df["SKU"]):
@@ -290,11 +290,6 @@ def get_sku_overfill_heat(sku):
                     line_counter += 1
 
                 df = df[df["SKU"] == sku]
-
-                for date in df["Date"]:
-                    if date not in return_object["Date"].keys():
-                        return_object["Date"][date] = date_counter
-                        date_counter += 1
 
                 # Adding data in following format [[x-coord-idx1, y-coord-idx1, overfill-value1], [x-coord-idx2, y-coord-idx2, overfill-value2], ...]
                 data_temp = [[date, return_object["Lines"][line], overfill_v] for (
@@ -310,7 +305,11 @@ def get_sku_overfill_heat(sku):
                     min_overfill = min_for_line
 
     data = sorted(data)
+
     for dp in data:
+        if dp[0] not in return_object["Date"].keys():
+            return_object["Date"][dp[0]] = date_counter
+            date_counter += 1
         dp[0] = return_object["Date"][dp[0]]
 
     return_object["data"] = data
