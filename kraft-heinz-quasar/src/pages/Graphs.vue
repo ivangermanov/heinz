@@ -1,5 +1,5 @@
 <template>
-  <q-page class="row items-center justify-evenly">
+  <q-page class="row items-center justify-evenly q-gutter-xl">
     <!-- Cases - Target vs Actual card -->
     <q-card
       class="col-3 cursor-pointer q-hoverable "
@@ -44,23 +44,67 @@
         </q-card-section>
       </router-link>
     </q-card>
-    <!-- SKU heatmap -->
+    <!-- SKU Overfill heatmap -->
     <q-card
       class="col-3 cursor-pointer q-hoverable "
       v-ripple
     >
       <router-link
-        to="/skus-heatmap"
+        to="/sku-overfill-heatmap"
         style="text-decoration: none; color: inherit;"
       >
         <q-card-section>
           <div class="column items-center justify-center">
             <q-img
-              src="skus-heatmap.png"
+              src="sku-overfill-heatmap.png"
               spinner-color="white"
             />
             <span class="q-pt-md non-selectable">
-              SKUs Heatmap
+              SKU Overfill Heatmap
+            </span>
+          </div>
+        </q-card-section>
+      </router-link>
+    </q-card>
+    <!-- Line overfill heatmap -->
+    <q-card
+      class="col-3 cursor-pointer q-hoverable "
+      v-ripple
+    >
+      <router-link
+        to="/line-overfill-heatmap"
+        style="text-decoration: none; color: inherit;"
+      >
+        <q-card-section>
+          <div class="column items-center justify-center">
+            <q-img
+              src="line-overfill-heatmap.png"
+              spinner-color="white"
+            />
+            <span class="q-pt-md non-selectable">
+              Line Overfill Heatmap
+            </span>
+          </div>
+        </q-card-section>
+      </router-link>
+    </q-card>
+    <!-- PCP -->
+    <q-card
+      class="col-3 cursor-pointer q-hoverable "
+      v-ripple
+    >
+      <router-link
+        to="/pcp"
+        style="text-decoration: none; color: inherit;"
+      >
+        <q-card-section>
+          <div class="column items-center justify-center">
+            <q-img
+              src="pcp.png"
+              spinner-color="white"
+            />
+            <span class="q-pt-md non-selectable">
+              Parallel Coordinates Plot
             </span>
           </div>
         </q-card-section>

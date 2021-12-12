@@ -48,7 +48,7 @@ import {
 } from 'vue';
 import * as echarts from 'echarts';
 
-interface SkusHeatmapDTO {
+interface SkuOverfillHeatmapDTO {
   Date: string[];
   Lines: string[];
   data: number[][];
@@ -59,7 +59,7 @@ interface SkusHeatmapDTO {
 export default defineComponent({
   props: {},
   setup() {
-    const data = ref(null as SkusHeatmapDTO | null);
+    const data = ref(null as SkuOverfillHeatmapDTO | null);
     const skuOptions = ref<string[]>([]);
     const skus = ref(skuOptions.value);
     const selectedSku = ref(skuOptions.value[0]);

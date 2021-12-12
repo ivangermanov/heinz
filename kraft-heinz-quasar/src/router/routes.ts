@@ -34,12 +34,12 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
-    path: '/skus-heatmap',
+    path: '/sku-overfill-heatmap',
     component: () => import('layouts/MainLayout.vue'),
     children: [
       {
-        path: '/skus-heatmap',
-        component: () => import('pages/SkusHeatmap.vue'),
+        path: '/sku-overfill-heatmap',
+        component: () => import('src/pages/SkuOverfillHeatmap.vue'),
       },
     ],
   },
