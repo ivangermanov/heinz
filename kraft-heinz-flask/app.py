@@ -216,15 +216,15 @@ def get_value_in_time(start_date, end_date, line='1', col='SKU'):
     return dic_df
 
 
-def Average_Speed_vs_overfill(begin_date, end_date, line):
+def Average_Speed_vs_overfill_LD(begin_date, end_date, line):
     df = pd.read_csv(
         f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
     df['Date'] = pd.to_datetime(df['Date'])
     df_l = df[(df["Date"] >= begin_date) & (df["Date"] <= end_date)]
     df_l['Overfill'] = df_l['Overfill'].abs()
-    df_g = df_l[['Cases Produced', 'Weight Result', 'Overfill']].groupby(pd.cut(
+    df_g = df_l[['Cases Produced', 'Rejects', 'Overfill']].groupby(pd.cut(
         df_l["Average Speed"], np.arange(0, 115, 5))).sum()  # 5000 because of max, doesn't matter anyways
-    df_g_col = df_l[['Cases Produced', 'Weight Result', 'Overfill']].groupby(
+    df_g_col = df_l[['Cases Produced', 'Rejects', 'Overfill']].groupby(
         pd.cut(df_l["Average Speed"], np.arange(0, 115, 5))).size()
     df_g['Amount of hours run on this Average Speed'] = df_g_col
 
@@ -236,6 +236,45 @@ def Average_Speed_vs_overfill(begin_date, end_date, line):
     # choose one of the 2
     # 1
     output['y_axis_cases_produced'] = list(df_g['Cases Produced'])
+    output['y_axis_amount_of_overfill_cases'] = list(df_g['Rejects'])
+
+    # 2
+    output['y_axis_overfill'] = list(df_g['Overfill'])
+
+    # and on 2nd y axis we have:
+    # hours spend on this setting (which is not true due to aggregation but lets ignore that)
+    output['y_axis_time_spend'] = list(
+        df_g['Amount of hours run on this Average Speed'])
+
+    return output
+
+def count_weight_result(row):
+    if row['Weight Result'] == 0:
+        return 30
+    else:
+        return 1
+
+def Average_Speed_vs_overfill_CD(begin_date, end_date, line):
+    df = pd.read_csv(
+        f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
+    df['Date'] = pd.to_datetime(df['Date'])
+    df_l = df[(df["Date"] >= begin_date) & (df["Date"] <= end_date)]
+    df_l['Overfill'] = df_l['Overfill'].abs()
+    df_l['Weight Result size'] = df_l.apply(lambda row: count_weight_result(row), axis = 1)
+    df_g = df_l[['Weight Result size', 'Weight Result', 'Overfill']].groupby(pd.cut(
+        df_l["Average Speed"], np.arange(0, 115, 5))).sum()  # 5000 because of max, doesn't matter anyways
+    df_g_col = df_l[['Weight Result size', 'Weight Result', 'Overfill']].groupby(
+        pd.cut(df_l["Average Speed"], np.arange(0, 115, 5))).size()
+    df_g['Amount of hours run on this Average Speed'] = df_g_col
+
+    output = dict()
+    # x-axis is average speed in agg bins, it is 110 instead of 115 because cut function returns one value less
+    output['x_axis'] = np.arange(0, 110, 5).tolist()
+
+    # y-axis contains all of the data we have on check-weigher
+    # choose one of the 2
+    # 1
+    output['y_axis_cases_produced'] = list(df_g['Weight Result size'])
     output['y_axis_amount_of_overfill_cases'] = list(df_g['Weight Result'])
 
     # 2
@@ -272,11 +311,19 @@ def add_sku_type(df):
     return df
 
 
-@app.route('/api/average_vs_overfill/<start>/<end>/<line>', methods=['GET'])
+@app.route('/api/average_vs_overfill_dl/<start>/<end>/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def average_vs_overfill(start, end, line):
+def average_vs_overfill_dl(start, end, line):
 
-    return_object = Average_Speed_vs_overfill(start, end, line)
+    return_object = Average_Speed_vs_overfill_LD(start, end, line)
+
+    return jsonify(return_object)
+
+@app.route('/api/average_vs_overfill_cl/<start>/<end>/<line>', methods=['GET'])
+@cross_origin(origin='*', headers=['Content-Type'])
+def average_vs_overfill_cl(start, end, line):
+
+    return_object = Average_Speed_vs_overfill_CD(start, end, line)
 
     return jsonify(return_object)
 
