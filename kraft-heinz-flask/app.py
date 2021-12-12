@@ -180,8 +180,8 @@ def extract_input(preprocessing_params, X):
     return [ai_input.values, cw_input, year_input, shift_input, dow_input, hour_input]
 
 
-def get_2_values_in_time(df, start_date, end_date, line='Line 1', col1='Cases Produced', col2='Target'):
-
+def get_2_values_in_time(start_date, end_date, line='1', col1='Cases Produced', col2='Target'):
+    df = pd.read_csv(f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
     line_name = 'Line ' + str(line)
     df = df[df['Line'] == line_name]
     df = df[[col1, col2, 'Date']]
@@ -197,8 +197,8 @@ def get_2_values_in_time(df, start_date, end_date, line='Line 1', col1='Cases Pr
     return dic_df
 
 
-def get_value_in_time(df, start_date, end_date, line='Line 1', col='SKU'):
-
+def get_value_in_time(start_date, end_date, line='1', col='SKU'):
+    df = pd.read_csv(f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
     line_name = 'Line ' + str(line)
     df = df[df['Line'] == line_name]
     df = df[[col, 'Date']]
@@ -278,7 +278,7 @@ def average_vs_overfill(start, end, line):
 def get_target_actual_cases(start, end, line):
 
     return_object = get_2_values_in_time(
-        df=df, start_date=start, end_date=end, line=line)
+        start_date=start, end_date=end, line=line)
 
     return jsonify(return_object)
 
@@ -288,7 +288,7 @@ def get_target_actual_cases(start, end, line):
 def get_sku(start, end, line):
 
     return_object = get_value_in_time(
-        df=df, start_date=start, end_date=end, line=line, col='SKU')
+        start_date=start, end_date=end, line=line, col='SKU')
 
     return jsonify(return_object)
 
@@ -298,7 +298,7 @@ def get_sku(start, end, line):
 def get_cases_produced(start, end, line):
 
     return_object = get_value_in_time(
-        df=df, start_date=start, end_date=end, line=line, col='Cases Produced')
+        start_date=start, end_date=end, line=line, col='Cases Produced')
 
     return jsonify(return_object)
 
