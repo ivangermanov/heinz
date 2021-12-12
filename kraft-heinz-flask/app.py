@@ -260,7 +260,7 @@ def get_all_skus():
 
 @app.route('/api/sku_overfill_heat/<sku>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def get_sku_overfill_heat(sku):
+def get_sku_overfill_heat(sku, quarterly: bool):
 
     return_object = {}
     return_object["Lines"] = {}
@@ -274,8 +274,12 @@ def get_sku_overfill_heat(sku):
 
     for line in range(1, config.LINE_COUNT):
         if line not in config.LINES_INCOMPLETE:
-            df = pd.read_csv(
-                f'data/preprocessed_format/hourly_perline/Line_{line}.csv')
+            if quarterly:
+                df = pd.read_csv(
+                    f'data/preprocessed_format/quarterhourly_perline/Line_{line}.csv')
+            else:
+                df = pd.read_csv(
+                    f'data/preprocessed_format/hourly_perline/Line_{line}.csv')
 
             df["Date"] = pd.to_datetime(df["Date"])
             if sku in list(df["SKU"]):
@@ -316,7 +320,7 @@ def get_sku_overfill_heat(sku):
 
 @app.route('/api/line_overfill_heat/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def get_line_overfill_heat(line):
+def get_line_overfill_heat(line, quarterly: bool):
     return_object = {}
     return_object["SKUs"] = {}
     return_object["Date"] = {}
@@ -326,9 +330,14 @@ def get_line_overfill_heat(line):
     date_counter = 0
 
     if line not in config.LINES_INCOMPLETE:
+        if quarterly:
+            df = pd.read_csv(
+                f'data/preprocessed_format/quarterhourly_perline/Line_{line}.csv')
+        else:
             df = pd.read_csv(
                 f'data/preprocessed_format/hourly_perline/Line_{line}.csv')
-            df["Date"] = pd.to_datetime(df["Date"])
+        
+        df["Date"] = pd.to_datetime(df["Date"])
 
     max_overfill = max(df["Overfill"])
     min_overfill = min(df["Overfill"])
