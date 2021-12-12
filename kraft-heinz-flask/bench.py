@@ -39,6 +39,7 @@ class FeatureInstance:
     def __init__(self,
                  training: bool,
                  granular: bool,
+                 quarterly: bool,
                  on: str,
                  line: str, estimator_params: Optional[dict] = None):
 
@@ -47,6 +48,7 @@ class FeatureInstance:
         self.line = line
         self.on = on
         self.estimator_params = estimator_params
+        self.quarterly = quarterly
 
     def get_check_weigher(self):
         print("Get check weigher")
@@ -64,8 +66,12 @@ class FeatureInstance:
         df_check[cn.CW_REJECTS_COL] = overfilled
 
         if not self.granular:
-            df_check[cn.DATE_COL] = df_check[cn.DATE_COL].dt.floor(freq="H")
-            df_check = df_check.groupby(cn.DATE_COL).sum().reset_index()
+            if self.quarterly:
+                df_check[cn.DATE_COL] = df_check[cn.DATE_COL].dt.round('15min') 
+                df_check = df_check.groupby(cn.DATE_COL).sum().reset_index()
+            else:
+                df_check[cn.DATE_COL] = df_check[cn.DATE_COL].dt.floor(freq="H")
+                df_check = df_check.groupby(cn.DATE_COL).sum().reset_index()
 
         return df_check
 
@@ -81,23 +87,40 @@ class FeatureInstance:
             group = cn.DATE_COL
 
         df["SKU"] = [s.rstrip("\n") for s in df["SKU"]]
-        #df = df.groupby(group).sum().reset_index()
+        return df
+
+    def get_quarterhourly_stats(self):
+        print("Get quarterhourly stats")
+
+        df = fmh.get_quarter_hourly(self.line, cn.QUARTER_HOURLY_LINESTATS_DATA_PATH)
+        df[cn.DATE_COL] = pd.to_datetime(df[cn.DATE_COL])
+
+        if self.granular:
+            group = cn.DATE_COL
+        else:
+            group = cn.DATE_COL
+
+        df["SKU"] = [s.rstrip("\n") for s in df["SKU"]]
         return df
 
     def fetch(self, testing_only: bool):
-        hourly = self.get_hourly_stats()
+        if self.quarterly:
+            ai = self.get_quarterhourly_stats()
+        else:
+            ai = self.get_hourly_stats()
+
         cw = self.get_check_weigher()
 
         if not self.training:
 
             if self.on == cn.AI_id:
-                df = pd.merge(hourly, cw, on=cn.DATE_COL).dropna()
+                df = pd.merge(ai, cw, on=cn.DATE_COL).dropna()
 
             elif self.on == cn.CW_id:
 
                 assert self.granular == True, "No sense in matching on CW if CW is aggregated by hour."
                 cw[f"{cn.DATE_COL}_temp"] = cw[cn.DATE_COL].dt.floor(freq="H")
-                df = pd.merge(hourly, cw,
+                df = pd.merge(ai, cw,
                               left_on=cn.DATE_COL,
                               right_on=f"{cn.DATE_COL}_temp",
                               how="inner").dropna()
@@ -122,7 +145,7 @@ class FeatureInstance:
             relevant_vars_HW = estimator_params["relevant_vars_HW"]
 
             if self.on == cn.AI_id:
-                hourly = hourly[relevant_vars_HW]
+                hourly = ai[relevant_vars_HW]
 
                 # Initializing merged df
                 df = pd.merge(hourly, cw, on=cn.DATE_COL).dropna()

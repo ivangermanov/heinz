@@ -258,10 +258,9 @@ def get_all_skus_as_list():
 def get_all_skus():
     return jsonify(get_all_skus_as_list())
 
-
 @app.route('/api/sku_overfill_heat/<sku>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def get_sku_overfill_heat(sku):
+def get_sku_overfill_heat(sku, quarterly: bool):
 
     return_object = {}
     return_object["Lines"] = {}
@@ -275,8 +274,12 @@ def get_sku_overfill_heat(sku):
 
     for line in range(1, config.LINE_COUNT):
         if line not in config.LINES_INCOMPLETE:
-            df = pd.read_csv(
-                f'data/preprocessed_format/hourly_perline/Line_{line}.csv')
+            if quarterly:
+                df = pd.read_csv(
+                    f'data/preprocessed_format/quarterhourly_perline/Line_{line}.csv')
+            else:
+                df = pd.read_csv(
+                    f'data/preprocessed_format/hourly_perline/Line_{line}.csv')
 
             df["Date"] = pd.to_datetime(df["Date"])
             if sku in list(df["SKU"]):
@@ -317,7 +320,7 @@ def get_sku_overfill_heat(sku):
 
 @app.route('/api/line_overfill_heat/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def get_line_overfill_heat(line, all_skus):
+def get_line_overfill_heat(line, quarterly: bool):
     return_object = {}
     return_object["SKUs"] = {}
     return_object["Date"] = {}
@@ -327,25 +330,30 @@ def get_line_overfill_heat(line, all_skus):
     date_counter = 0
 
     if line not in config.LINES_INCOMPLETE:
+        if quarterly:
+            df = pd.read_csv(
+                f'data/preprocessed_format/quarterhourly_perline/Line_{line}.csv')
+        else:
             df = pd.read_csv(
                 f'data/preprocessed_format/hourly_perline/Line_{line}.csv')
-            df["Date"] = pd.to_datetime(df["Date"])
+        
+        df["Date"] = pd.to_datetime(df["Date"])
 
     max_overfill = max(df["Overfill"])
     min_overfill = min(df["Overfill"])
 
+    all_skus = list(set(df["SKU"]))
     for sku in all_skus:
-            if sku in list(df["SKU"]):
-                if sku not in return_object["SKUs"]:
-                    return_object["SKUs"][sku] = sku_counter
-                    sku_counter += 1
+        if sku not in return_object["SKUs"]:
+            return_object["SKUs"][sku] = sku_counter
+            sku_counter += 1
 
-                df_temp_sku = df[df["SKU"]==sku]
-                # Adding data in following format [[x-coord-idx1, y-coord-idx1, overfill-value1], [x-coord-idx2, y-coord-idx2, overfill-value2], ...]
-                data_temp = [[date, return_object["SKUs"][sku], overfill_v] for (
-                    overfill_v, date) in zip(df_temp_sku["Overfill"], df_temp_sku["Date"])]
+        df_temp_sku = df[df["SKU"]==sku]
+        # Adding data in following format [[x-coord-idx1, y-coord-idx1, overfill-value1], [x-coord-idx2, y-coord-idx2, overfill-value2], ...]
+        data_temp = [[date, return_object["SKUs"][sku], overfill_v] for (
+            overfill_v, date) in zip(df_temp_sku["Overfill"], df_temp_sku["Date"])]
 
-                data.extend(data_temp)
+        data.extend(data_temp)
 
     data = sorted(data)
 

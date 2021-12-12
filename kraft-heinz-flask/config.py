@@ -16,6 +16,7 @@ INSTANCE_OFFSET = 100
 
 GRANULAR_REJECT_DATA_PATH = "data/original-format/check-weigher/"
 HOURLY_LINESTATS_DATA_PATH = "data/original-format/line-stats/"
+QUARTER_HOURLY_LINESTATS_DATA_PATH = "data/original-format/line-stats-quarterly/"
 
 COMBINED_GRANULAR_DATA_PATH = "data/preprocessed_format/assets/check_weigher/"
 
