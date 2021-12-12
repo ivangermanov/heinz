@@ -16,7 +16,7 @@
       label="SKU"
       :options="skus"
       @filter="filterFn"
-      :style="{width: width, maxWidth: width, minWidth: width}"
+      style="width: 300px"
     >
       <template v-slot:no-option>
         <q-item>
@@ -26,13 +26,6 @@
         </q-item>
       </template>
     </q-select>
-    <q-date
-      v-model="model"
-      range
-      mask="DD-MM-YYYY"
-    >
-      <q-resize-observer @resize="onResize" />
-    </q-date>
   </div>
 
   <div
@@ -54,22 +47,22 @@ import {
   onBeforeMount,
 } from 'vue';
 import * as echarts from 'echarts';
-import { cloneDeep } from 'lodash';
 
-interface TargetActualCasesDTO {
+interface SkuOverfillHeatmapDTO {
   Date: string[];
   Lines: string[];
   data: number[][];
+  max_colorcode: number;
+  min_colorcode: number;
 }
 
 export default defineComponent({
   props: {},
   setup() {
-    const data = ref(null as TargetActualCasesDTO | null);
+    const data = ref(null as SkuOverfillHeatmapDTO | null);
     const skuOptions = ref<string[]>([]);
     const skus = ref(skuOptions.value);
     const selectedSku = ref(skuOptions.value[0]);
-    const model = ref(null as typeof computedModel.value | null);
 
     const chart: Ref<echarts.ECharts | null> = shallowRef(null);
     const chartEl: Ref<HTMLElement | null> = ref(null);
@@ -102,10 +95,6 @@ export default defineComponent({
       });
     }
 
-    watch(model, () => {
-      if (selectedSku.value) fetchHeatmap();
-    });
-
     watch(selectedSku, () => {
       fetchHeatmap();
     });
@@ -115,21 +104,6 @@ export default defineComponent({
       selectedSku.value = skuOptions.value[0];
       fetchHeatmap();
     });
-
-    const computedModel = computed(() => {
-      return {
-        from: '08-04-2019',
-        to: '08-09-2021',
-      };
-    });
-
-    watch(
-      computedModel,
-      () => {
-        model.value = cloneDeep(computedModel.value);
-      },
-      { immediate: true }
-    );
 
     watch(
       [data, chartEl],
@@ -159,8 +133,8 @@ export default defineComponent({
             },
           },
           visualMap: {
-            min: 0,
-            max: 10,
+            min: data.value?.min_colorcode,
+            max: data.value?.max_colorcode,
             calculable: true,
             orient: 'vertical',
             right: 0,
@@ -208,15 +182,8 @@ export default defineComponent({
       { immediate: true, deep: true }
     );
 
-    const width = ref('0px');
-    function onResize(size: { width: number }) {
-      width.value = `${size.width}px`;
-      console.log(width.value);
-    }
-
     return {
       data,
-      model,
       chartEl,
       skuOptions,
       skus,
@@ -229,8 +196,6 @@ export default defineComponent({
           );
         });
       },
-      width,
-      onResize,
     };
   },
 });
