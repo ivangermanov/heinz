@@ -220,7 +220,7 @@ def Average_Speed_vs_overfill(begin_date, end_date, line):
     df = pd.read_csv(
         f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
     df_l = df.loc[(df["Date"] > begin_date) & (df["Date"] < end_date)]
-
+    df_l['Overfill'] = df_l['Overfill'].abs()
     df_g = df_l[['Cases Produced', 'Weight Result', 'Overfill']].groupby(pd.cut(
         df_l["Average Speed"], np.arange(0, 115, 5))).sum()  # 5000 becasue of max, doesnt matter anyways
     df_g_col = df_l[['Cases Produced', 'Weight Result', 'Overfill']].groupby(
