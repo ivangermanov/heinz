@@ -1,6 +1,6 @@
 <template>
   <q-inner-loading
-    :showing="data === null"
+    :showing="isFetching"
     label="Please wait..."
     color="primary"
     label-style="font-size: 1.1em"
@@ -8,8 +8,24 @@
   />
   <div
     class="q-gutter-y-md column items-start"
-    v-if="data !==null"
+    v-if="!isFetching"
   >
+    <q-btn-toggle
+      v-model="isQuarterly"
+      spread
+      class="my-custom-toggle"
+      style="width: 100%"
+      no-caps
+      rounded
+      unelevated
+      toggle-color="primary"
+      color="white"
+      text-color="primary"
+      :options="[
+          {label: 'Quarterly', value: true},
+          {label: 'Hourly', value: false}
+        ]"
+    />
     <q-select
       filled
       v-model="selectedLine"
@@ -34,7 +50,7 @@
   </div>
 
   <div
-    v-if="data !==null"
+    v-if="!isFetching"
     ref="chartEl"
     style="width: 60%; height: 500px"
   />
@@ -61,10 +77,13 @@ export default defineComponent({
   props: {},
   setup() {
     const data = ref(null as BarLineAverageSpeedDTO | null);
+    const isFetching = ref(true);
 
     const model = ref(null as typeof computedModel.value | null);
     const lines = ref(lineOptions);
     const selectedLine = ref(lineOptions[0]);
+
+    const isQuarterly = ref(true);
 
     const chart: Ref<echarts.ECharts | null> = shallowRef(null);
     const chartEl: Ref<HTMLElement | null> = ref(null);
@@ -106,16 +125,43 @@ export default defineComponent({
       });
     });
 
+    const timeSpentNormalized = computed(() => {
+      const timeSpent = data.value?.y_axis_time_spend;
+
+      if (timeSpent === undefined) {
+        return [];
+      }
+
+      return timeSpent.map((value) => {
+        if (isQuarterly.value) return value / 4;
+        else return value;
+      });
+    });
+
     function fetch() {
+      isFetching.value = true;
+      // if model to or model from are null don't call api
+      if (
+        model.value?.from === null ||
+        model.value?.from === undefined ||
+        model.value?.to === null ||
+        model.value?.to === undefined
+      ) {
+        isFetching.value = false;
+        return;
+      }
+
       void api
         .get(
           `average_speed_cases_hourly/${model.value?.from ?? ''}/${
             model.value?.to ?? ''
-          }/${selectedLine.value}`
+          }/${selectedLine.value}/${isQuarterly.value ? 'true' : 'false'}`
         )
         .then((res) => {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           data.value = res.data;
+          console.log(res);
+          isFetching.value = false;
         });
     }
 
@@ -128,6 +174,10 @@ export default defineComponent({
     );
 
     watch(selectedLine, () => {
+      fetch();
+    });
+
+    watch(isQuarterly, () => {
       fetch();
     });
 
@@ -151,7 +201,7 @@ export default defineComponent({
       () => {
         const option: EChartOption = {
           title: {
-            text: 'Average Line Speed',
+            text: 'Average Line Speed Cases',
           },
           tooltip: {
             trigger: 'axis',
@@ -162,11 +212,9 @@ export default defineComponent({
               },
             },
             formatter(params) {
-              console.log(params);
               if (!isArray(params)) {
                 return '';
               }
-
               const numberOfOverillCases = params[0];
               const numberOfCasesProduced = params[1];
               const averageSpeed = params[2];
@@ -220,10 +268,6 @@ export default defineComponent({
             },
             {
               type: 'value',
-              name: 'Number of cases rejected',
-            },
-            {
-              type: 'value',
               name: 'Time spent',
               axisLabel: {
                 formatter: '{value} hours',
@@ -244,7 +288,7 @@ export default defineComponent({
             {
               name: 'Time spent',
               type: 'bar',
-              data: data.value?.y_axis_time_spend,
+              data: timeSpentNormalized.value,
               yAxisIndex: 1,
             },
           ],
@@ -264,10 +308,12 @@ export default defineComponent({
 
     return {
       data,
+      isFetching,
       model,
       chartEl,
       lines,
       selectedLine,
+      isQuarterly,
       filterFn(val: string, update: (arg0: () => void) => void) {
         update(() => {
           const needle = val.toLowerCase();
@@ -280,3 +326,8 @@ export default defineComponent({
   },
 });
 </script>
+
+<style lang="sass" scoped>
+.my-custom-toggle
+  border: 1px solid #027be3
+</style>

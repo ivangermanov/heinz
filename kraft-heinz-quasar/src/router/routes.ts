@@ -54,12 +54,12 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
-    path: '/bar-line-average-speed',
+    path: '/bar-line-average-speed-cases',
     component: () => import('layouts/MainLayout.vue'),
     children: [
       {
-        path: '/bar-line-average-speed',
-        component: () => import('src/pages/BarLineAverageSpeed.vue'),
+        path: '/bar-line-average-speed-cases',
+        component: () => import('src/pages/BarLineAverageSpeedCases.vue'),
       },
     ],
   },

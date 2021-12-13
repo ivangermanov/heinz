@@ -94,17 +94,17 @@
       v-ripple
     >
       <router-link
-        to="/bar-line-average-speed"
+        to="/bar-line-average-speed-cases"
         style="text-decoration: none; color: inherit;"
       >
         <q-card-section>
           <div class="column items-center justify-center">
             <q-img
-              src="bar-line-average-speed.png"
+              src="bar-line-average-speed-cases.png"
               spinner-color="white"
             />
             <span class="q-pt-md non-selectable">
-              Bar Line Average Speed
+              Bar Line Average Speed Cases
             </span>
           </div>
         </q-card-section>
