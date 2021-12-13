@@ -15,6 +15,7 @@ import xgboost as xgb
 import json
 from sklearn.metrics import mean_absolute_error
 import keras
+import datetime
 
 # Init app
 
@@ -533,6 +534,55 @@ def get_pcp(line, dimensions):
     return_object["columns"] = dimensions
     return_object["raw_data"] = df
     return jsonify(return_object)
+
+@app.route('/api/bar_line/<line>/<begin_date>/<end_date>/', methods=['GET'])
+@cross_origin(origin='*', headers=['Content-Type'])
+def bar_line(line, begin_date, end_date):
+    return_object = {}
+
+    df = pd.read_csv(f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
+    df = df.loc[(df["Date"] > begin_date) & (df["Date"] < end_date)]
+    unique_skus = list(df["SKU"].unique())
+    overfill_values = {}
+    legend = unique_skus.copy()
+    legend.append("Average Speed")
+    overfill_max = 0
+    overfill_min = 0
+
+    for sku in unique_skus:
+        curr_sku_df = df[df["SKU"] == sku]
+        overfill_vals = list(curr_sku_df["Overfill"])
+        overfill_values[sku] = overfill_vals
+
+        curr_max = max(overfill_vals)
+        if curr_max > overfill_max:
+            overfill_max = curr_max
+        curr_min = min(overfill_vals)
+        if curr_min < overfill_min:
+            overfill_min = curr_min
+
+    date_values = list(df["Date"])
+    hour_strings = []
+    
+    for date in date_values:
+        date_object = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
+        hour_str = date_object.strftime('%H:%M')
+        hour_strings.append(hour_str)
+    
+    avg_speed_values = list(df["Average Speed"])
+    speed_max = max(avg_speed_values)
+    speed_min = min(avg_speed_values)
+
+    return_object["legend"] = legend
+    return_object["hour_strings"] = hour_strings
+    return_object["overfill_values"] = overfill_values
+    return_object["avg_speed_values"] = avg_speed_values
+    return_object["overfill_min"] = overfill_min
+    return_object["overfill_max"] = overfill_max
+    return_object["speed_min"] = speed_min
+    return_object["speed_max"] = speed_max
+
+    return return_object
 
 # Get a single todo
 
