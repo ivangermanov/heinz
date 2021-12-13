@@ -543,13 +543,19 @@ def get_pcp(line, dimensions):
     return jsonify(return_object)
 
 
-@app.route('/api/bar_line/<line>/<begin_date>/<end_date>/', methods=['GET'])
+@app.route('/api/bar_line/<line>/<begin_date>/<end_date>/<quarterly>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def bar_line(line, begin_date, end_date):
+def bar_line(line, begin_date, end_date, quarterly):
+    quarterly = quarterly == "true"
     return_object = {}
+    
+    if quarterly:
+        df = pd.read_csv(
+            f"data/preprocessed_format/quarterhourly_perline/Line_{line}.csv")
+    if quarterly:
+        df = pd.read_csv(
+            f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
 
-    df = pd.read_csv(
-        f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
     df = df.loc[(df["Date"] > begin_date) & (df["Date"] < end_date)]
     df = add_sku_type(df)
     unique_skus = list(df["SKU_type"].unique())
