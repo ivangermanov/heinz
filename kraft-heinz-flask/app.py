@@ -209,7 +209,6 @@ def get_value_in_time(start_date, end_date, line='1', col='SKU'):
     df['Date'] = pd.to_datetime(df['Date'])
 
     df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
-    # print(df)
     dic_df = dict()
     dic_df[col] = list(df[col])
     dic_df['Date'] = list(df['Date'])
@@ -219,7 +218,7 @@ def get_value_in_time(start_date, end_date, line='1', col='SKU'):
 
 def get_average_speed_cases_hourly(begin_date, end_date, line, quarterly):
     quarterly = quarterly == "true"
-    
+
     if quarterly:
         df = pd.read_csv(
             f"data/preprocessed_format/quarterhourly_perline/Line_{line}.csv")
@@ -325,6 +324,8 @@ def add_sku_type(df):
     df = df.merge(df_b_p, how='left', left_on='SKU', right_on='SKU')
 
     df.rename(columns={0: 'SKU_type'}, inplace=True)
+
+    df["SKU_type"].fillna("Unknown", inplace=True)
 
     return df
 
@@ -543,20 +544,22 @@ def get_pcp(line, dimensions):
     return jsonify(return_object)
 
 
-@app.route('/api/bar_line/<line>/<begin_date>/<end_date>/<quarterly>', methods=['GET'])
+@app.route('/api/bar_line/<begin_date>/<end_date>/<line>/<quarterly>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def bar_line(line, begin_date, end_date, quarterly):
+def bar_line(begin_date, end_date, line, quarterly):
     quarterly = quarterly == "true"
     return_object = {}
-    
+
     if quarterly:
         df = pd.read_csv(
             f"data/preprocessed_format/quarterhourly_perline/Line_{line}.csv")
-    if quarterly:
+    else:
         df = pd.read_csv(
             f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
 
-    df = df.loc[(df["Date"] > begin_date) & (df["Date"] < end_date)]
+    df["Date"] = pd.to_datetime(df["Date"])
+
+    df = df[(df["Date"] >= begin_date) & (df["Date"] <= end_date)]
     df = add_sku_type(df)
     unique_skus = list(df["SKU_type"].unique())
     overfill_values = {}
@@ -581,8 +584,7 @@ def bar_line(line, begin_date, end_date, quarterly):
     hour_strings = []
 
     for date in date_values:
-        date_object = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
-        hour_str = date_object.strftime('%H:%M')
+        hour_str = date.strftime('%H:%M')
         hour_strings.append(hour_str)
 
     avg_speed_values = list(df["Average Speed"])
