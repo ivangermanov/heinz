@@ -44,11 +44,12 @@
 import { api } from 'src/boot/axios';
 import { defineComponent, computed, watch, Ref, ref, shallowRef } from 'vue';
 import * as echarts from 'echarts';
-import { cloneDeep } from 'lodash';
+import { EChartOption } from 'echarts';
+import { cloneDeep, isArray } from 'lodash';
 
 interface BarLineAverageSpeedDTO {
   x_axis: number[];
-  y_axis_amount_of_overfill_cases: number[];
+  y_axis_number_of_rejected_cases: number[];
   y_axis_cases_produced: number[];
   y_axis_overfill: number[];
   y_axis_time_spend: number[];
@@ -83,32 +84,32 @@ export default defineComponent({
       });
     });
 
-    const overfillCasesNormalized = computed(() => {
-      const amountOfOverfillCases = data.value?.y_axis_amount_of_overfill_cases;
-      if (amountOfOverfillCases === undefined) {
+    const rejectedCasesNormalized = computed(() => {
+      const numberOfRejectedCases = data.value?.y_axis_number_of_rejected_cases;
+      if (numberOfRejectedCases === undefined) {
         return [];
       }
       const timeSpent = data.value?.y_axis_time_spend;
       if (timeSpent === undefined) {
-        return amountOfOverfillCases;
+        return numberOfRejectedCases;
       }
 
-      return amountOfOverfillCases.map((value, index) => {
+      return numberOfRejectedCases.map((value, index) => {
         return Math.round(value / timeSpent[index]);
       });
     });
 
-    const overfilledCasesDividedByProduced = computed(() => {
-      return overfillCasesNormalized.value.map((overfilled, index) => {
+    const rejectedCasesDividedByProduced = computed(() => {
+      return rejectedCasesNormalized.value.map((rejected, index) => {
         const produced = producedCasesNormalized.value[index];
-        return ((overfilled / produced) * 100).toFixed(2);
+        return ((rejected / produced) * 100).toFixed(2);
       });
     });
 
     function fetch() {
       void api
         .get(
-          `average_vs_overfill/${model.value?.from ?? ''}/${
+          `average_speed_cases_hourly/${model.value?.from ?? ''}/${
             model.value?.to ?? ''
           }/${selectedLine.value}`
         )
@@ -148,7 +149,7 @@ export default defineComponent({
     watch(
       [data, chartEl],
       () => {
-        const option = {
+        const option: EChartOption = {
           title: {
             text: 'Average Line Speed',
           },
@@ -159,6 +160,30 @@ export default defineComponent({
               crossStyle: {
                 color: '#999',
               },
+            },
+            formatter(params) {
+              console.log(params);
+              if (!isArray(params)) {
+                return '';
+              }
+
+              const numberOfOverillCases = params[0];
+              const numberOfCasesProduced = params[1];
+              const averageSpeed = params[2];
+              const dataIndex = averageSpeed.dataIndex || 0;
+
+              return `${numberOfOverillCases.marker || ''} ${
+                numberOfOverillCases.seriesName || ''
+              }: ${numberOfOverillCases.data as number}<br>
+                      ${numberOfCasesProduced.marker || ''} ${
+                numberOfCasesProduced.seriesName || ''
+              }: ${numberOfCasesProduced.data as number}<br>
+                ${averageSpeed.marker || ''} ${
+                averageSpeed.seriesName || ''
+              }: ${averageSpeed.data as number} hours <br>
+              Rejected / Produced: ${
+                rejectedCasesDividedByProduced.value[dataIndex] || ''
+              }%`;
             },
           },
           toolbox: {
@@ -171,9 +196,8 @@ export default defineComponent({
           },
           legend: {
             data: [
-              'Number of overfill cases',
               'Number of cases produced',
-              // 'Overfill',
+              'Number of cases rejected',
               'Time spent',
             ],
           },
@@ -186,13 +210,17 @@ export default defineComponent({
               },
               name: 'Average speed',
               nameLocation: 'center',
-              nameGap: '25',
+              nameGap: 25,
             },
           ],
           yAxis: [
             {
               type: 'value',
               name: 'Number of cases produced',
+            },
+            {
+              type: 'value',
+              name: 'Number of cases rejected',
             },
             {
               type: 'value',
@@ -204,20 +232,14 @@ export default defineComponent({
           ],
           series: [
             {
-              name: 'Number of overfill cases',
-              type: 'line',
-              data: overfillCasesNormalized.value,
-            },
-            {
               name: 'Number of cases produced',
               type: 'line',
               data: producedCasesNormalized.value,
             },
             {
-              name: 'Overfilled/Produced',
+              name: 'Number of cases rejected',
               type: 'line',
-              data: overfilledCasesDividedByProduced.value,
-              symbolSize: 0,
+              data: rejectedCasesNormalized.value,
             },
             {
               name: 'Time spent',
