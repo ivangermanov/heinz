@@ -583,20 +583,18 @@ def bar_line(begin_date, end_date, line, quarterly):
     overfill_values = {}
     legend = unique_skus.copy()
     legend.append("Average Speed")
-    overfill_max = 0
-    overfill_min = 0
+    overfill_max = max(list(df["Overfill"]))
+    overfill_min = max(list(df["Overfill"]))
 
     for sku in unique_skus:
-        curr_sku_df = df[df["SKU_type"] == sku]
-        overfill_vals = list(curr_sku_df["Overfill"])
-        overfill_values[sku] = overfill_vals
+        overfill_values[sku] = []
+    for date, overfill_val, sku in zip(df["Overfill"], df["Date"], df["SKU"]):
 
-        curr_max = max(overfill_vals)
-        if curr_max > overfill_max:
-            overfill_max = curr_max
-        curr_min = min(overfill_vals)
-        if curr_min < overfill_min:
-            overfill_min = curr_min
+        for sku_u in unique_skus:
+            if sku == sku_u:
+                overfill_values[sku].append(overfill_val)
+            else:
+                overfill_values[sku].append(0)
 
     date_values = list(df["Date"])
     hour_strings = []
