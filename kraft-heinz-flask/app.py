@@ -551,7 +551,8 @@ def bar_line(line, begin_date, end_date):
     df = pd.read_csv(
         f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
     df = df.loc[(df["Date"] > begin_date) & (df["Date"] < end_date)]
-    unique_skus = list(df["SKU"].unique())
+    df = add_sku_type(df)
+    unique_skus = list(df["SKU_type"].unique())
     overfill_values = {}
     legend = unique_skus.copy()
     legend.append("Average Speed")
@@ -559,7 +560,7 @@ def bar_line(line, begin_date, end_date):
     overfill_min = 0
 
     for sku in unique_skus:
-        curr_sku_df = df[df["SKU"] == sku]
+        curr_sku_df = df[df["SKU_type"] == sku]
         overfill_vals = list(curr_sku_df["Overfill"])
         overfill_values[sku] = overfill_vals
 
