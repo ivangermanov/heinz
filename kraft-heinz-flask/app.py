@@ -216,7 +216,7 @@ def get_value_in_time(start_date, end_date, line='1', col='SKU'):
     return dic_df
 
 
-def Average_Speed_vs_overfill_LD(begin_date, end_date, line):
+def get_average_speed_cases_hourly(begin_date, end_date, line):
     df = pd.read_csv(
         f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
     df['Date'] = pd.to_datetime(df['Date'])
@@ -236,7 +236,7 @@ def Average_Speed_vs_overfill_LD(begin_date, end_date, line):
     # choose one of the 2
     # 1
     output['y_axis_cases_produced'] = list(df_g['Cases Produced'])
-    output['y_axis_amount_of_overfill_cases'] = list(df_g['Rejects'])
+    output['y_axis_number_of_rejected_cases'] = list(df_g['Rejects'])
 
     # 2
     output['y_axis_overfill'] = list(df_g['Overfill'])
@@ -254,7 +254,7 @@ def count_weight_result(row):
     else:
         return 1
 
-def Average_Speed_vs_overfill_CD(begin_date, end_date, line):
+def get_average_speed_cases_check_weigher(begin_date, end_date, line):
     df = pd.read_csv(
         f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
     df['Date'] = pd.to_datetime(df['Date'])
@@ -311,19 +311,19 @@ def add_sku_type(df):
     return df
 
 
-@app.route('/api/average_vs_overfill_dl/<start>/<end>/<line>', methods=['GET'])
+@app.route('/api/average_speed_cases_hourly/<start>/<end>/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def average_vs_overfill_dl(start, end, line):
+def average_speed_cases_hourly(start, end, line):
 
-    return_object = Average_Speed_vs_overfill_LD(start, end, line)
+    return_object = get_average_speed_cases_hourly(start, end, line)
 
     return jsonify(return_object)
 
-@app.route('/api/average_vs_overfill_cl/<start>/<end>/<line>', methods=['GET'])
+@app.route('/api/average_speed_cases_check_weigher/<start>/<end>/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def average_vs_overfill_cl(start, end, line):
+def average_speed_cases_check_weigher(start, end, line):
 
-    return_object = Average_Speed_vs_overfill_CD(start, end, line)
+    return_object = get_average_speed_cases_check_weigher(start, end, line)
 
     return jsonify(return_object)
 
