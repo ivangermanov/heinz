@@ -588,7 +588,7 @@ def bar_line(begin_date, end_date, line, quarterly):
 
     for sku in unique_skus:
         overfill_values[sku] = []
-    for date, overfill_val, sku in zip(df["Overfill"], df["Date"], df["SKU"]):
+    for date, overfill_val, sku in zip(df["Overfill"], df["Date"], df["SKU_type"]):
 
         for sku_u in unique_skus:
             if sku == sku_u:
