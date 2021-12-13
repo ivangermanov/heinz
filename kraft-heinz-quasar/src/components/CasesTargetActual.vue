@@ -45,6 +45,7 @@ import { api } from 'src/boot/axios';
 import { defineComponent, computed, watch, Ref, ref, shallowRef } from 'vue';
 import * as echarts from 'echarts';
 import { cloneDeep } from 'lodash';
+import { EChartOption } from 'echarts';
 
 interface TargetActualCasesDTO {
   'Cases Produced': number[];
@@ -111,7 +112,7 @@ export default defineComponent({
     watch(
       [data, chartEl],
       () => {
-        const option = {
+        const option: EChartOption = {
           tooltip: {
             trigger: 'axis',
             axisPointer: {

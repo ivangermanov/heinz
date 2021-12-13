@@ -202,6 +202,8 @@ export default defineComponent({
 
         if (chartEl.value !== null) {
           chart.value = echarts.init(chartEl.value);
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
           chart.value.setOption(option);
         }
       },
