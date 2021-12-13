@@ -140,7 +140,6 @@ export default defineComponent({
 
     function fetch() {
       isFetching.value = true;
-      // if model to or model from are null don't call api
       if (
         model.value?.from === null ||
         model.value?.from === undefined ||

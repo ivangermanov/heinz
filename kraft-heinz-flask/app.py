@@ -308,16 +308,17 @@ def get_average_speed_cases_check_weigher(begin_date, end_date, line, quarterly)
 def full_sku(row):
     return str(row['index']) + ' - ' + str(row[4])
 
+
 def adjust_sku(df):
     change_dict = {
-        '10162 - 6 OZ OM NATURAL SALAMI 8 CT':'10162 - Nat Salami',
-        '9630 - 8Z OM D F TKY CRD BK PEP 8':'9630 - 8Z Cracked Black Pepper Turkey',
-        '9645 - 8Z OM DL SHVD TKY BRST LS SMKD 8CT' :'9645 - 8Z OM DL SHVD TKY BRST LS SMKD 8CT\t',
-        '7353 - 15Z OM VR PK SM HM & ORT 8' : '7353 - 15Z OM VAR PK SMKD HM OR TKY 8',
-        '7635 - 15Z OM DF RSTTRKY&HNYHM 8' : '763500 - 15Z OM DF RSTTRKY&HNYHM 8',
-        '8709 - 16Z OM DELI FRESH BLACK FORST HAM 8' : '8709 - 16Z OM DELI FRESH BLCK FORST HAM 8',
-        '8755 - 14Z OM SELECTS HAM APPLEWOOD SMKD 8' : '8755 - 14Z OM SLCTS HAM APPLEWD SMKD 8',
-        '9438 - 28Z  OM DELI HAM SALAMI 4' : '9438 - 28Z OM DELI HAM SALAMI 4'}
+        '10162 - 6 OZ OM NATURAL SALAMI 8 CT': '10162 - Nat Salami',
+        '9630 - 8Z OM D F TKY CRD BK PEP 8': '9630 - 8Z Cracked Black Pepper Turkey',
+        '9645 - 8Z OM DL SHVD TKY BRST LS SMKD 8CT': '9645 - 8Z OM DL SHVD TKY BRST LS SMKD 8CT\t',
+        '7353 - 15Z OM VR PK SM HM & ORT 8': '7353 - 15Z OM VAR PK SMKD HM OR TKY 8',
+        '7635 - 15Z OM DF RSTTRKY&HNYHM 8': '763500 - 15Z OM DF RSTTRKY&HNYHM 8',
+        '8709 - 16Z OM DELI FRESH BLACK FORST HAM 8': '8709 - 16Z OM DELI FRESH BLCK FORST HAM 8',
+        '8755 - 14Z OM SELECTS HAM APPLEWOOD SMKD 8': '8755 - 14Z OM SLCTS HAM APPLEWD SMKD 8',
+        '9438 - 28Z  OM DELI HAM SALAMI 4': '9438 - 28Z OM DELI HAM SALAMI 4'}
     for key in change_dict:
         df['SKU'].replace(change_dict[key], key, inplace=True)
 
@@ -601,8 +602,7 @@ def bar_line(begin_date, end_date, line, quarterly):
     hour_strings = []
 
     for date in date_values:
-        hour_str = date.strftime('%H:%M')
-        hour_strings.append(hour_str)
+        hour_strings.append(date)
 
     avg_speed_values = list(df["Average Speed"])
     speed_max = max(avg_speed_values)

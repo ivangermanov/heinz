@@ -126,7 +126,7 @@
               spinner-color="white"
             />
             <span class="q-pt-md non-selectable">
-              Bar Line SKU Family
+              Bar Line Overfill Per SKU Family
             </span>
           </div>
         </q-card-section>

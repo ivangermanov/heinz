@@ -61,14 +61,17 @@ import { api } from 'src/boot/axios';
 import { defineComponent, computed, watch, Ref, ref, shallowRef } from 'vue';
 import * as echarts from 'echarts';
 import { EChartOption } from 'echarts';
-import { cloneDeep, isArray } from 'lodash';
+import { cloneDeep } from 'lodash';
 
-interface BarLineAverageSpeedDTO {
-  x_axis: number[];
-  y_axis_number_of_rejected_cases: number[];
-  y_axis_cases_produced: number[];
-  y_axis_overfill: number[];
-  y_axis_time_spend: number[];
+interface BarLineSkuFamilyDTO {
+  avg_speed_values: number[];
+  hour_strings: string[];
+  legend: string[];
+  overfill_max: number;
+  overfill_min: number;
+  overfill_values: { [key: string]: number[] };
+  speed_max: number;
+  speed_min: number;
 }
 
 const lineOptions = ['1', '3', '4', '5', '6', '7', '8', '11', '13', '14'];
@@ -76,7 +79,7 @@ const lineOptions = ['1', '3', '4', '5', '6', '7', '8', '11', '13', '14'];
 export default defineComponent({
   props: {},
   setup() {
-    const data = ref(null as BarLineAverageSpeedDTO | null);
+    const data = ref(null as BarLineSkuFamilyDTO | null);
     const isFetching = ref(true);
 
     const model = ref(null as typeof computedModel.value | null);
@@ -88,59 +91,27 @@ export default defineComponent({
     const chart: Ref<echarts.ECharts | null> = shallowRef(null);
     const chartEl: Ref<HTMLElement | null> = ref(null);
 
-    const producedCasesNormalized = computed(() => {
-      const amountOfCasesProduced = data.value?.y_axis_cases_produced;
-      if (amountOfCasesProduced === undefined) {
-        return [];
-      }
-      const timeSpent = data.value?.y_axis_time_spend;
-      if (timeSpent === undefined) {
-        return amountOfCasesProduced;
-      }
-
-      return amountOfCasesProduced.map((value, index) => {
-        return Math.round(value / timeSpent[index]);
-      });
-    });
-
-    const rejectedCasesNormalized = computed(() => {
-      const numberOfRejectedCases = data.value?.y_axis_number_of_rejected_cases;
-      if (numberOfRejectedCases === undefined) {
-        return [];
-      }
-      const timeSpent = data.value?.y_axis_time_spend;
-      if (timeSpent === undefined) {
-        return numberOfRejectedCases;
-      }
-
-      return numberOfRejectedCases.map((value, index) => {
-        return Math.round(value / timeSpent[index]);
-      });
-    });
-
-    const rejectedCasesDividedByProduced = computed(() => {
-      return rejectedCasesNormalized.value.map((rejected, index) => {
-        const produced = producedCasesNormalized.value[index];
-        return ((rejected / produced) * 100).toFixed(2);
-      });
-    });
-
-    const timeSpentNormalized = computed(() => {
-      const timeSpent = data.value?.y_axis_time_spend;
-
-      if (timeSpent === undefined) {
+    const overfillValuesSeries = computed(() => {
+      if (data.value === null || data.value === undefined) {
         return [];
       }
 
-      return timeSpent.map((value) => {
-        if (isQuarterly.value) return value / 4;
-        else return value;
+      const overfillValues = data.value.overfill_values;
+      const overfillValuesSeries: EChartOption.SeriesLine[] = [];
+
+      Object.keys(overfillValues).forEach((key) => {
+        overfillValuesSeries.push({
+          name: key,
+          type: 'bar',
+          data: overfillValues[key],
+        });
       });
+      console.log(overfillValuesSeries);
+      return overfillValuesSeries;
     });
 
     function fetch() {
       isFetching.value = true;
-      // if model to or model from are null don't call api
       if (
         model.value?.from === null ||
         model.value?.from === undefined ||
@@ -153,9 +124,9 @@ export default defineComponent({
 
       void api
         .get(
-          `average_speed_cases_hourly/${model.value?.from ?? ''}/${
-            model.value?.to ?? ''
-          }/${selectedLine.value}/${isQuarterly.value ? 'true' : 'false'}`
+          `bar_line/${model.value?.from ?? ''}/${model.value?.to ?? ''}/${
+            selectedLine.value
+          }/${isQuarterly.value ? 'true' : 'false'}`
         )
         .then((res) => {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -183,8 +154,8 @@ export default defineComponent({
 
     const computedModel = computed(() => {
       return {
-        from: '08-04-2019',
-        to: '08-09-2021',
+        from: '01-01-2021',
+        to: '02-01-2021',
       };
     });
 
@@ -201,37 +172,12 @@ export default defineComponent({
       () => {
         const option: EChartOption = {
           title: {
-            text: 'Average Line Speed Cases',
+            text: 'Overfill Per SKU Family',
           },
           tooltip: {
             trigger: 'axis',
             axisPointer: {
               type: 'cross',
-              crossStyle: {
-                color: '#999',
-              },
-            },
-            formatter(params) {
-              if (!isArray(params)) {
-                return '';
-              }
-              const numberOfOverillCases = params[0];
-              const numberOfCasesProduced = params[1];
-              const averageSpeed = params[2];
-              const dataIndex = averageSpeed.dataIndex || 0;
-
-              return `${numberOfOverillCases.marker || ''} ${
-                numberOfOverillCases.seriesName || ''
-              }: ${numberOfOverillCases.data as number}<br>
-                      ${numberOfCasesProduced.marker || ''} ${
-                numberOfCasesProduced.seriesName || ''
-              }: ${numberOfCasesProduced.data as number}<br>
-                ${averageSpeed.marker || ''} ${
-                averageSpeed.seriesName || ''
-              }: ${averageSpeed.data as number} hours <br>
-              Rejected / Produced: ${
-                rejectedCasesDividedByProduced.value[dataIndex] || ''
-              }%`;
             },
           },
           toolbox: {
@@ -242,55 +188,53 @@ export default defineComponent({
               saveAsImage: { show: true },
             },
           },
+          dataZoom: [
+            {
+              type: 'slider',
+              start: 0,
+              end: 100,
+            },
+            {
+              type: 'inside',
+              start: 0,
+              end: 100,
+            },
+          ],
           legend: {
             data: [
-              'Number of cases produced',
-              'Number of cases rejected',
-              'Time spent',
+              // 'Average speed',
+              ...(data.value?.legend ?? []),
             ],
           },
           xAxis: [
             {
               type: 'category',
-              data: data.value?.x_axis,
-              axisPointer: {
-                type: 'shadow',
-              },
-              name: 'Average speed',
-              nameLocation: 'center',
-              nameGap: 25,
+              data: data.value?.hour_strings.map((date) =>
+                new Date(date).toLocaleString('en-US')
+              ),
             },
           ],
           yAxis: [
+            // {
+            //   type: 'value',
+            //   name: 'Average speed',
+            //   min: data.value?.speed_min,
+            //   max: data.value?.speed_max,
+            // },
             {
               type: 'value',
-              name: 'Number of cases produced',
-            },
-            {
-              type: 'value',
-              name: 'Time spent',
-              axisLabel: {
-                formatter: '{value} hours',
-              },
+              name: 'Overfill',
+              min: data.value?.overfill_min,
+              max: data.value?.overfill_max,
             },
           ],
           series: [
-            {
-              name: 'Number of cases produced',
-              type: 'line',
-              data: producedCasesNormalized.value,
-            },
-            {
-              name: 'Number of cases rejected',
-              type: 'line',
-              data: rejectedCasesNormalized.value,
-            },
-            {
-              name: 'Time spent',
-              type: 'bar',
-              data: timeSpentNormalized.value,
-              yAxisIndex: 1,
-            },
+            // {
+            //   name: 'Average speed',
+            //   type: 'line',
+            //   data: data.value?.avg_speed_values,
+            // },
+            ...overfillValuesSeries.value,
           ],
         };
 
