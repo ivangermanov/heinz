@@ -88,7 +88,7 @@
         </q-card-section>
       </router-link>
     </q-card>
-    <!-- Bar Line Average Speed -->
+    <!-- Bar Line Average Speed Cases -->
     <q-card
       class="col-3 cursor-pointer q-hoverable "
       v-ripple
@@ -110,8 +110,30 @@
         </q-card-section>
       </router-link>
     </q-card>
-    <!-- PCP -->
+    <!-- Bar Line SKU Family -->
     <q-card
+      class="col-3 cursor-pointer q-hoverable "
+      v-ripple
+    >
+      <router-link
+        to="/bar-line-sku-family"
+        style="text-decoration: none; color: inherit;"
+      >
+        <q-card-section>
+          <div class="column items-center justify-center">
+            <q-img
+              src="bar-line-sku-family.png"
+              spinner-color="white"
+            />
+            <span class="q-pt-md non-selectable">
+              Bar Line SKU Family
+            </span>
+          </div>
+        </q-card-section>
+      </router-link>
+    </q-card>
+    <!-- PCP -->
+    <!-- <q-card
       class="col-3 cursor-pointer q-hoverable "
       v-ripple
     >
@@ -131,7 +153,7 @@
           </div>
         </q-card-section>
       </router-link>
-    </q-card>
+    </q-card> -->
   </q-page>
 </template>
 

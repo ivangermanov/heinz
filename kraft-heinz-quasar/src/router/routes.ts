@@ -63,6 +63,16 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
+  {
+    path: '/bar-line-sku-family',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '/bar-line-sku-family',
+        component: () => import('src/pages/BarLineSkuFamily.vue'),
+      },
+    ],
+  },
   // Always leave this as last one,
   // but you can also remove it
   {
