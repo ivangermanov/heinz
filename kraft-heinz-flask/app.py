@@ -431,8 +431,8 @@ def get_sku_overfill_heat(sku: str, quarterly: str):
                     overfill_v, date) in zip(df["Overfill"], df["Date"])]
 
                 data.extend(data_temp)
-                max_for_line = max(df["Overfill"])
-                min_for_line = min(df["Overfill"])
+                max_for_line = df["Overfill"].quantile(0.98)
+                min_for_line = df["Overfill"].quantile(0.02)
 
                 if max_overfill < max_for_line:
                     max_overfill = max_for_line
@@ -481,8 +481,8 @@ def get_line_overfill_heat(line: str, quarterly: str):
 
         df["Date"] = pd.to_datetime(df["Date"])
 
-    max_overfill = max(df["Overfill"])
-    min_overfill = min(df["Overfill"])
+    max_overfill = df["Overfill"].quantile(0.98)
+    min_overfill = df["Overfill"].quantile(0.02)
 
     all_skus = list(set(df["SKU"]))
     for sku in all_skus:
@@ -516,7 +516,7 @@ def get_line_overfill_heat(line: str, quarterly: str):
 # Possible dimensions to include for the PCP
 
 
-@app.route('/api/get_ai_cw_cols/', methods=['GET'])
+@app.route('/api/get_ai_cw_cols', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_cols():
     return jsonify(list(config.AI_CW_COLS))
