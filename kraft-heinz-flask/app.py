@@ -324,6 +324,18 @@ def adjust_sku(df):
 
     return df
 
+def cut_sku(row):
+    return row['SKU'][0:4]
+
+def match_missing_sku(row, list_1, df_2):
+    if pd.isnull(row['SKU_type']):
+        if row['SKU'] in list_1:
+            try:
+                return df_2[df_2['SKU_short'] == row['SKU_short']][0].values[0]
+            except IndexError:
+                return row['SKU_type']
+    else:
+        return row['SKU_type']
 
 def add_sku_type(df):
     data_path_2 = 'data'
@@ -342,6 +354,20 @@ def add_sku_type(df):
     df = df.merge(df_b_p, how='left', left_on='SKU', right_on='SKU')
 
     df.rename(columns={0: 'SKU_type'}, inplace=True)
+
+    all_book_unique = list(df_b_p['SKU'].unique())
+    all_unique = list(df['SKU'].unique())
+
+    l_2 = []
+    for sku in all_unique:
+        if sku not in all_book_unique:
+            l_2.append(sku)
+
+    
+    df_b_p['SKU_short'] = df_b_p.apply(lambda row: cut_sku(row), axis=1)
+    df['SKU_short'] = df.apply(lambda row: cut_sku(row), axis=1)
+    
+    df['SKU_type'] = df.apply(lambda row: match_missing_sku(row, l_2, df_b_p), axis=1)
 
     df["SKU_type"].fillna("Unknown", inplace=True)
 
