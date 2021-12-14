@@ -190,7 +190,8 @@ def get_2_values_in_time(start_date, end_date, line='1', col1='Cases Produced', 
     df = df[[col1, col2, 'Date']]
     df['Date'] = pd.to_datetime(df['Date'])
 
-    df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
+    df = df[(df['Date'] >= datetime.datetime.strptime(start_date, "%d-%m-%Y"))
+            & (df['Date'] <= datetime.datetime.strptime(end_date, "%d-%m-%Y"))]
 
     dic_df = dict()
     dic_df[col1] = list(df[col1])
@@ -208,7 +209,8 @@ def get_value_in_time(start_date, end_date, line='1', col='SKU'):
     df = df[[col, 'Date']]
     df['Date'] = pd.to_datetime(df['Date'])
 
-    df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
+    df = df[(df['Date'] >= datetime.datetime.strptime(start_date, "%d-%m-%Y"))
+            & (df['Date'] <= datetime.datetime.strptime(end_date, "%d-%m-%Y"))]
     dic_df = dict()
     dic_df[col] = list(df[col])
     dic_df['Date'] = list(df['Date'])
@@ -227,7 +229,8 @@ def get_average_speed_cases_hourly(begin_date, end_date, line, quarterly, overfi
             f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
 
     df['Date'] = pd.to_datetime(df['Date'])
-    df_l = df[(df["Date"] >= begin_date) & (df["Date"] <= end_date)]
+    df_l = df[(df["Date"] >= datetime.datetime.strptime(begin_date, "%d-%m-%Y"))
+              & (df["Date"] <= datetime.datetime.strptime(end_date, "%d-%m-%Y"))]
     df_g = df_l[['Cases Produced', 'Rejects', overfill_col]].groupby(pd.cut(
         df_l["Average Speed"], np.arange(0, 115, 5))).sum()  # 5000 because of max, doesn't matter anyways
     df_g_col = df_l[['Cases Produced', 'Rejects', overfill_col]].groupby(
@@ -273,7 +276,8 @@ def get_average_speed_cases_check_weigher(begin_date, end_date, line, quarterly,
             f"data/preprocessed_format/hourly_perline/Line_{line}.csv")
 
     df['Date'] = pd.to_datetime(df['Date'])
-    df_l = df[(df["Date"] >= begin_date) & (df["Date"] <= end_date)]
+    df_l = df[(df["Date"] >= datetime.datetime.strptime(begin_date, "%d-%m-%Y"))
+              & (df["Date"] <= datetime.datetime.strptime(end_date, "%d-%m-%Y"))]
     df_l['Weight Result size'] = df_l.apply(
         lambda row: count_weight_result(row), axis=1)
     df_g = df_l[['Weight Result size', 'Weight Result', overfill_col]].groupby(pd.cut(
@@ -322,8 +326,10 @@ def adjust_sku(df):
 
     return df
 
+
 def cut_sku(row):
     return row['SKU'][0:4]
+
 
 def match_missing_sku(row, list_1, df_2):
     if pd.isnull(row['SKU_type']):
@@ -334,6 +340,7 @@ def match_missing_sku(row, list_1, df_2):
                 return row['SKU_type']
     else:
         return row['SKU_type']
+
 
 def add_sku_type(df):
     data_path_2 = 'data'
@@ -361,11 +368,11 @@ def add_sku_type(df):
         if sku not in all_book_unique:
             l_2.append(sku)
 
-    
     df_b_p['SKU_short'] = df_b_p.apply(lambda row: cut_sku(row), axis=1)
     df['SKU_short'] = df.apply(lambda row: cut_sku(row), axis=1)
-    
-    df['SKU_type'] = df.apply(lambda row: match_missing_sku(row, l_2, df_b_p), axis=1)
+
+    df['SKU_type'] = df.apply(
+        lambda row: match_missing_sku(row, l_2, df_b_p), axis=1)
 
     df["SKU_type"].fillna("Unknown", inplace=True)
 
@@ -376,7 +383,8 @@ def add_sku_type(df):
 @cross_origin(origin='*', headers=['Content-Type'])
 def average_speed_cases_hourly(start, end, line, quarterly, overfill_col):
 
-    return_object = get_average_speed_cases_hourly(start, end, line, quarterly, overfill_col)
+    return_object = get_average_speed_cases_hourly(
+        start, end, line, quarterly, overfill_col)
 
     return jsonify(return_object)
 
@@ -565,6 +573,8 @@ def get_cols():
     return jsonify(list(config.AI_CW_COLS))
 
 # PCP
+
+
 @app.route('/api/pcp/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_pcp(line, dimensions):
@@ -599,10 +609,11 @@ def bar_line(begin_date, end_date, line, quarterly, overfill_col):
 
     df["Date"] = pd.to_datetime(df["Date"])
 
-    df = df[(df["Date"] >= begin_date) & (df["Date"] <= end_date)]
+    df = df[(df["Date"] >= datetime.datetime.strptime(begin_date, "%d-%m-%Y"))
+            & (df["Date"] <= datetime.datetime.strptime(end_date, "%d-%m-%Y"))]
     df = add_sku_type(df)
     unique_sku_types = ["Duos", "Base", "Family", "Mega", "PMSU", "Unknown"]
-    unique_skus = list(df["SKU_type"].unique())
+    # unique_sku_types = list(df["SKU_type"].unique())
     overfill_values = {}
     legend = unique_sku_types.copy()
     legend.append("Average Speed")
@@ -640,11 +651,50 @@ def bar_line(begin_date, end_date, line, quarterly, overfill_col):
 
     return return_object
 
+
 @app.route('/api/get_available_maps', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_available_maps():
     return jsonify(list(config.OVERFILL_AGGREGATION_OPTIONS))
 
+
+@app.route('/api/current_overfill_past/<begin_date>/<end_date>/<line>/<overfill_col>', methods=['GET'])
+@cross_origin(origin='*', headers=['Content-Type'])
+def get_current_overfill_past(begin_date: str, end_date: str, line: str, overfill_col: str):
+    df = pd.read_csv(
+        f'data/preprocessed_format/hourly_perline/Line_{line}.csv')
+    df["Date"] = pd.to_datetime(df["Date"])
+
+    df = df[(df["Date"] >= datetime.datetime.strptime(begin_date, "%d-%m-%Y"))
+            & (df["Date"] <= datetime.datetime.strptime(end_date, "%d-%m-%Y"))]
+    overfill = df[overfill_col].sum()
+
+    return jsonify(overfill)
+
+
+@app.route('/api/current_overfill_present/<line>/<overfill_col>', methods=['GET'])
+@cross_origin(origin='*', headers=['Content-Type'])
+def get_current_overfill_present(line: str, overfill_col: str):
+    overfill_col = "Overfill"
+    return_object = {}
+    df = pd.read_csv(
+        f'data/preprocessed_format/hourly_perline/Line_{line}.csv')
+    df["Date"] = pd.to_datetime(df["Date"])
+
+    current_date = df.tail(1)["Date"]
+    current_date_index = current_date.index
+    overfill_value = df.tail(1)[overfill_col]
+
+    current_shift = df.tail(1)["Shift"]
+    overfill_values = sum(df[(df["Date"].dt.date.reset_index(drop=True) == current_date.dt.date.reset_index(drop=True)[0]) &
+                                (df["Shift"].reset_index(drop=True) == current_shift.reset_index(drop=True)[0])][overfill_col])
+
+    return_object["current_date"] = [int(current_date.dt.hour)]
+    return_object["overfill_value"] = list(overfill_value)
+    return_object["current_shift"] = list(current_shift)
+    return_object["overfill_values"] = overfill_values
+
+    return jsonify(return_object)
 
 # Get a single todo
 

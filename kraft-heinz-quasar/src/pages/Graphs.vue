@@ -1,5 +1,5 @@
 <template>
-  <q-page class="row items-center justify-evenly q-gutter-xl">
+  <q-page class="row items-center justify-evenly q-gutter-xl q-pa-md">
     <!-- Cases - Target vs Actual card -->
     <q-card
       class="col-3 cursor-pointer q-hoverable "
@@ -132,28 +132,28 @@
         </q-card-section>
       </router-link>
     </q-card>
-    <!-- PCP -->
-    <!-- <q-card
+    <!-- Current overfill -->
+    <q-card
       class="col-3 cursor-pointer q-hoverable "
       v-ripple
     >
       <router-link
-        to="/pcp"
+        to="/current-overfill"
         style="text-decoration: none; color: inherit;"
       >
         <q-card-section>
           <div class="column items-center justify-center">
             <q-img
-              src="pcp.png"
+              src="current-overfill.png"
               spinner-color="white"
             />
             <span class="q-pt-md non-selectable">
-              Parallel Coordinates Plot
+              Current Overfill
             </span>
           </div>
         </q-card-section>
       </router-link>
-    </q-card> -->
+    </q-card>
   </q-page>
 </template>
 

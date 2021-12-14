@@ -73,6 +73,16 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
+  {
+    path: '/current-overfill',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [
+      {
+        path: '/current-overfill',
+        component: () => import('src/pages/CurrentOverfill.vue'),
+      },
+    ],
+  },
   // Always leave this as last one,
   // but you can also remove it
   {
