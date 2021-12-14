@@ -67,11 +67,19 @@ class FeatureInstance:
 
         if not self.granular:
             if self.quarterly:
-                df_check[cn.DATE_COL] = df_check[cn.DATE_COL].dt.round('15min') 
+                df_check[cn.DATE_COL] = df_check[cn.DATE_COL].dt.round('15min')
+                aggregates = prepare_aggregates(cn.OVERFILL_AGGREGATION_TYPES)
+                df_check_overfills = df_check.groupby(cn.DATE_COL)["Overfill"].agg(aggregates)
                 df_check = df_check.groupby(cn.DATE_COL).sum().reset_index()
+                df_check.drop(["Unnamed: 0", "Overfill"], axis=1, inplace=True)
+                df_check[list(cn.OVERFILL_AGGREGATION_TYPES.keys())] = df_check_overfills[list(cn.OVERFILL_AGGREGATION_TYPES.keys())].values
             else:
                 df_check[cn.DATE_COL] = df_check[cn.DATE_COL].dt.floor(freq="H")
+                aggregates = prepare_aggregates(cn.OVERFILL_AGGREGATION_TYPES)
+                df_check_overfills = df_check.groupby(cn.DATE_COL)["Overfill"].agg(aggregates)
                 df_check = df_check.groupby(cn.DATE_COL).sum().reset_index()
+                df_check.drop(["Unnamed: 0", "Overfill"], axis=1, inplace=True)
+                df_check[list(cn.OVERFILL_AGGREGATION_TYPES.keys())] = df_check_overfills[list(cn.OVERFILL_AGGREGATION_TYPES.keys())].values
 
         return df_check
 
@@ -235,6 +243,16 @@ def dt_mapper(feature, temporal_granularity):
     }
     return dt_mapper[temporal_granularity]
 
+def prepare_aggregates(*args):
+    aggregates = []
+
+    for agg in args:
+        for type, func in agg.items():
+            aggregates.append((type, func))
+
+    return aggregates
+
+
 
 estimator_params = {
     "input_lag_columns": ["Unit Weight", "Overfill", "Weight Result"],
@@ -258,10 +276,11 @@ estimator_params = {
 
 # FI = FeatureInstance(
 #     training=False,
-#     granular=Fasl,
+#     granular=False,
 #     on=cn.AI_id,
 #     line="Line 1",
+#     quarterly=False,
 #     estimator_params=estimator_params
 # )
 
-# df = FI.fetch()
+# df = FI.fetch(testing_only=False)

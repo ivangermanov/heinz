@@ -55,6 +55,16 @@ MODEL_NAMES = {
     "Line 1": "WR1.pickle.dat"
 }
 
+OVERFILL_AGGREGATION_TYPES = {
+    "Underfill": lambda x: x[x < 0].sum(),
+    "Overfill": lambda x: x[x >= 0].sum(),
+    "Cumulative Overfill": lambda x: x.sum(),
+}
+
+REST_AGGREGATION_TYPES = {
+    col: lambda x: x.sum() for col in AI_CW_COLS
+}
+
 N_TENDENCY = 100
 #datetime(year, month, day, hour, minute, second, microsecond)
 CURRENT_MODEL_TYPE = "lstm"
