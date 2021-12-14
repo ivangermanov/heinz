@@ -605,18 +605,19 @@ def bar_line(begin_date, end_date, line, quarterly):
 
     df = df[(df["Date"] >= begin_date) & (df["Date"] <= end_date)]
     df = add_sku_type(df)
+    unique_sku_types = ["Duos", "Base", "Family", "Mega", "PMSU"]
     unique_skus = list(df["SKU_type"].unique())
     overfill_values = {}
-    legend = unique_skus.copy()
+    legend = unique_sku_types.copy()
     legend.append("Average Speed")
     overfill_max = max(list(df["Overfill"]))
-    overfill_min = max(list(df["Overfill"]))
+    overfill_min = min(list(df["Overfill"]))
 
-    for sku in unique_skus:
+    for sku in unique_sku_types:
         overfill_values[sku] = []
-    for date, overfill_val, sku in zip(df["Overfill"], df["Date"], df["SKU_type"]):
+    for date, overfill_val, sku in zip(df["Date"], df["Overfill"], df["SKU_type"]):
 
-        for sku_u in unique_skus:
+        for sku_u in unique_sku_types:
             if sku == sku_u:
                 overfill_values[sku].append(overfill_val)
             else:
