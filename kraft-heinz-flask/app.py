@@ -216,7 +216,7 @@ def get_value_in_time(start_date, end_date, line='1', col='SKU'):
     return dic_df
 
 
-def get_average_speed_cases_hourly(begin_date, end_date, line, quarterly):
+def get_average_speed_cases_hourly(begin_date, end_date, line, quarterly, overfill_col):
     quarterly = quarterly == "true"
 
     if quarterly:
@@ -228,10 +228,9 @@ def get_average_speed_cases_hourly(begin_date, end_date, line, quarterly):
 
     df['Date'] = pd.to_datetime(df['Date'])
     df_l = df[(df["Date"] >= begin_date) & (df["Date"] <= end_date)]
-    df_l['Overfill'] = df_l['Overfill'].abs()
-    df_g = df_l[['Cases Produced', 'Rejects', 'Overfill']].groupby(pd.cut(
+    df_g = df_l[['Cases Produced', 'Rejects', overfill_col]].groupby(pd.cut(
         df_l["Average Speed"], np.arange(0, 115, 5))).sum()  # 5000 because of max, doesn't matter anyways
-    df_g_col = df_l[['Cases Produced', 'Rejects', 'Overfill']].groupby(
+    df_g_col = df_l[['Cases Produced', 'Rejects', overfill_col]].groupby(
         pd.cut(df_l["Average Speed"], np.arange(0, 115, 5))).size()
     df_g['Amount of hours run on this Average Speed'] = df_g_col
 
@@ -246,7 +245,7 @@ def get_average_speed_cases_hourly(begin_date, end_date, line, quarterly):
     output['y_axis_number_of_rejected_cases'] = list(df_g['Rejects'])
 
     # 2
-    output['y_axis_overfill'] = list(df_g['Overfill'])
+    output['y_axis_overfill'] = list(df_g[overfill_col])
 
     # and on 2nd y axis we have:
     # hours spend on this setting (which is not true due to aggregation but lets ignore that)
@@ -263,7 +262,7 @@ def count_weight_result(row):
         return 1
 
 
-def get_average_speed_cases_check_weigher(begin_date, end_date, line, quarterly):
+def get_average_speed_cases_check_weigher(begin_date, end_date, line, quarterly, overfill_col):
     quarterly = quarterly == "true"
 
     if quarterly:
@@ -275,12 +274,11 @@ def get_average_speed_cases_check_weigher(begin_date, end_date, line, quarterly)
 
     df['Date'] = pd.to_datetime(df['Date'])
     df_l = df[(df["Date"] >= begin_date) & (df["Date"] <= end_date)]
-    df_l['Overfill'] = df_l['Overfill'].abs()
     df_l['Weight Result size'] = df_l.apply(
         lambda row: count_weight_result(row), axis=1)
-    df_g = df_l[['Weight Result size', 'Weight Result', 'Overfill']].groupby(pd.cut(
+    df_g = df_l[['Weight Result size', 'Weight Result', overfill_col]].groupby(pd.cut(
         df_l["Average Speed"], np.arange(0, 115, 5))).sum()  # 5000 because of max, doesn't matter anyways
-    df_g_col = df_l[['Weight Result size', 'Weight Result', 'Overfill']].groupby(
+    df_g_col = df_l[['Weight Result size', 'Weight Result', overfill_col]].groupby(
         pd.cut(df_l["Average Speed"], np.arange(0, 115, 5))).size()
     df_g['Amount of hours run on this Average Speed'] = df_g_col
 
@@ -295,7 +293,7 @@ def get_average_speed_cases_check_weigher(begin_date, end_date, line, quarterly)
     output['y_axis_amount_of_overfill_cases'] = list(df_g['Weight Result'])
 
     # 2
-    output['y_axis_overfill'] = list(df_g['Overfill'])
+    output['y_axis_overfill'] = list(df_g[overfill_col])
 
     # and on 2nd y axis we have:
     # hours spend on this setting (which is not true due to aggregation but lets ignore that)
@@ -441,7 +439,7 @@ def get_all_skus():
 
 @app.route('/api/sku_overfill_heat/<sku>/<quarterly>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def get_sku_overfill_heat(sku: str, quarterly: str):
+def get_sku_overfill_heat(sku: str, quarterly: str, overfill_col):
     quarterly = quarterly == "true"
 
     return_object = {}
@@ -473,11 +471,11 @@ def get_sku_overfill_heat(sku: str, quarterly: str):
 
                 # Adding data in following format [[x-coord-idx1, y-coord-idx1, overfill-value1], [x-coord-idx2, y-coord-idx2, overfill-value2], ...]
                 data_temp = [[date, return_object["Lines"][line], overfill_v] for (
-                    overfill_v, date) in zip(df["Overfill"], df["Date"])]
+                    overfill_v, date) in zip(df[overfill_col], df["Date"])]
 
                 data.extend(data_temp)
-                max_for_line = df["Overfill"].quantile(0.98)
-                min_for_line = df["Overfill"].quantile(0.02)
+                max_for_line = df[overfill_col].quantile(0.98)
+                min_for_line = df[overfill_col].quantile(0.02)
 
                 if max_overfill < max_for_line:
                     max_overfill = max_for_line
@@ -505,7 +503,7 @@ def get_sku_overfill_heat(sku: str, quarterly: str):
 
 @app.route('/api/line_overfill_heat/<line>/<quarterly>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def get_line_overfill_heat(line: str, quarterly: str):
+def get_line_overfill_heat(line: str, quarterly: str, overfill_col):
     quarterly = quarterly == "true"
 
     return_object = {}
@@ -526,8 +524,8 @@ def get_line_overfill_heat(line: str, quarterly: str):
 
         df["Date"] = pd.to_datetime(df["Date"])
 
-    max_overfill = df["Overfill"].quantile(0.98)
-    min_overfill = df["Overfill"].quantile(0.02)
+    max_overfill = df[overfill_col].quantile(0.98)
+    min_overfill = df[overfill_col].quantile(0.02)
 
     all_skus = list(set(df["SKU"]))
     for sku in all_skus:
@@ -538,7 +536,7 @@ def get_line_overfill_heat(line: str, quarterly: str):
         df_temp_sku = df[df["SKU"] == sku]
         # Adding data in following format [[x-coord-idx1, y-coord-idx1, overfill-value1], [x-coord-idx2, y-coord-idx2, overfill-value2], ...]
         data_temp = [[date, return_object["SKUs"][sku], overfill_v] for (
-            overfill_v, date) in zip(df_temp_sku["Overfill"], df_temp_sku["Date"])]
+            overfill_v, date) in zip(df_temp_sku[overfill_col], df_temp_sku["Date"])]
 
         data.extend(data_temp)
 
@@ -567,8 +565,6 @@ def get_cols():
     return jsonify(list(config.AI_CW_COLS))
 
 # PCP
-
-
 @app.route('/api/pcp/<line>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_pcp(line, dimensions):
@@ -590,7 +586,7 @@ def get_pcp(line, dimensions):
 
 @app.route('/api/bar_line/<begin_date>/<end_date>/<line>/<quarterly>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def bar_line(begin_date, end_date, line, quarterly):
+def bar_line(begin_date, end_date, line, quarterly, overfill_col):
     quarterly = quarterly == "true"
     return_object = {}
 
@@ -610,12 +606,12 @@ def bar_line(begin_date, end_date, line, quarterly):
     overfill_values = {}
     legend = unique_sku_types.copy()
     legend.append("Average Speed")
-    overfill_max = max(list(df["Overfill"]))
-    overfill_min = min(list(df["Overfill"]))
+    overfill_max = max(list(df[overfill_col]))
+    overfill_min = min(list(df[overfill_col]))
 
     for sku in unique_sku_types:
         overfill_values[sku] = []
-    for date, overfill_val, sku in zip(df["Date"], df["Overfill"], df["SKU_type"]):
+    for date, overfill_val, sku in zip(df["Date"], df[overfill_col], df["SKU_type"]):
 
         for sku_u in unique_sku_types:
             if sku == sku_u:
@@ -643,6 +639,12 @@ def bar_line(begin_date, end_date, line, quarterly):
     return_object["speed_max"] = speed_max
 
     return return_object
+
+@app.route('/api/get_available_maps', methods=['GET'])
+@cross_origin(origin='*', headers=['Content-Type'])
+def get_available_maps():
+    return jsonify(list(config.OVERFILL_AGGREGATION_TYPES.keys()))
+
 
 # Get a single todo
 
