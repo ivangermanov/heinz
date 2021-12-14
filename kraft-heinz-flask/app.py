@@ -372,11 +372,11 @@ def add_sku_type(df):
     return df
 
 
-@app.route('/api/average_speed_cases_hourly/<start>/<end>/<line>/<quarterly>', methods=['GET'])
+@app.route('/api/average_speed_cases_hourly/<start>/<end>/<line>/<quarterly>/<overfill_col>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
-def average_speed_cases_hourly(start, end, line, quarterly):
+def average_speed_cases_hourly(start, end, line, quarterly, overfill_col):
 
-    return_object = get_average_speed_cases_hourly(start, end, line, quarterly)
+    return_object = get_average_speed_cases_hourly(start, end, line, quarterly, overfill_col)
 
     return jsonify(return_object)
 

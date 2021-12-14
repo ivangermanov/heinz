@@ -154,7 +154,9 @@ export default defineComponent({
         .get(
           `average_speed_cases_hourly/${model.value?.from ?? ''}/${
             model.value?.to ?? ''
-          }/${selectedLine.value}/${isQuarterly.value ? 'true' : 'false'}`
+          }/${selectedLine.value}/${
+            isQuarterly.value ? 'true' : 'false'
+          }/Cumulative Overfill`
         )
         .then((res) => {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
