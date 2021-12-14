@@ -43,6 +43,20 @@
         </q-item>
       </template>
     </q-select>
+    <q-select
+      v-model="selectedOverfillType"
+      label="Overfill Type"
+      :options="overfillTypes"
+      style="width: 300px"
+    >
+      <template v-slot:no-option>
+        <q-item>
+          <q-item-section class="text-grey">
+            No results
+          </q-item-section>
+        </q-item>
+      </template>
+    </q-select>
   </div>
 
   <div
@@ -73,6 +87,13 @@ interface SkuOverfillHeatmapDTO {
   min_colorcode: number;
 }
 
+const overfillTypes = [
+  'Cumulative Overfill',
+  'Absolute Overfill',
+  'Overfill',
+  'Underfill',
+];
+
 export default defineComponent({
   props: {},
   setup() {
@@ -83,6 +104,7 @@ export default defineComponent({
     const selectedSku = ref(skuOptions.value[0]);
 
     const isQuarterly = ref(false);
+    const selectedOverfillType = ref(overfillTypes[0]);
 
     const chart: Ref<echarts.ECharts | null> = shallowRef(null);
     const chartEl: Ref<HTMLElement | null> = ref(null);
@@ -113,7 +135,7 @@ export default defineComponent({
         .get(
           `/sku_overfill_heat/${selectedSku.value}/${
             isQuarterly.value ? 'true' : 'false'
-          }/Cumulative Overfill`
+          }/${selectedOverfillType.value}`
         )
         .then((res) => {
           console.log(res);
@@ -134,6 +156,10 @@ export default defineComponent({
     });
 
     watch(isQuarterly, () => {
+      fetchHeatmap();
+    });
+
+    watch(selectedOverfillType, () => {
       fetchHeatmap();
     });
 
@@ -227,6 +253,8 @@ export default defineComponent({
       skus,
       selectedSku,
       isQuarterly,
+      overfillTypes,
+      selectedOverfillType,
       filterFn(val: string, update: (arg0: () => void) => void) {
         update(() => {
           const needle = val.toLowerCase();
