@@ -165,6 +165,9 @@ export default defineComponent({
             orient: 'vertical',
             right: 0,
             top: 50,
+            formatter: function (value: number) {
+              return String(value.toFixed(0)) + ' lbs';
+            },
           },
           dataZoom: [
             {
