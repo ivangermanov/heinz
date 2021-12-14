@@ -113,7 +113,7 @@ export default defineComponent({
         .get(
           `/sku_overfill_heat/${selectedSku.value}/${
             isQuarterly.value ? 'true' : 'false'
-          }`
+          }/Cumulative Overfill`
         )
         .then((res) => {
           console.log(res);

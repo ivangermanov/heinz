@@ -126,7 +126,7 @@ export default defineComponent({
         .get(
           `bar_line/${model.value?.from ?? ''}/${model.value?.to ?? ''}/${
             selectedLine.value
-          }/${isQuarterly.value ? 'true' : 'false'}`
+          }/${isQuarterly.value ? 'true' : 'false'}/Cumulative Overfill`
         )
         .then((res) => {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

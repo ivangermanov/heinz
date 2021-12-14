@@ -103,7 +103,7 @@ export default defineComponent({
         .get(
           `/line_overfill_heat/${selectedLine.value}/${
             isQuarterly.value ? 'true' : 'false'
-          }`
+          }/Cumulative Overfill`
         )
         .then((res) => {
           console.log(res);

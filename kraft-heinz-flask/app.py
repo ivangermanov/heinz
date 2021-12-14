@@ -437,7 +437,7 @@ def get_all_skus():
     return jsonify(get_all_skus_as_list())
 
 
-@app.route('/api/sku_overfill_heat/<sku>/<quarterly>', methods=['GET'])
+@app.route('/api/sku_overfill_heat/<sku>/<quarterly>/<overfill_col>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_sku_overfill_heat(sku: str, quarterly: str, overfill_col):
     quarterly = quarterly == "true"
@@ -501,7 +501,7 @@ def get_sku_overfill_heat(sku: str, quarterly: str, overfill_col):
     return jsonify(return_object)
 
 
-@app.route('/api/line_overfill_heat/<line>/<quarterly>', methods=['GET'])
+@app.route('/api/line_overfill_heat/<line>/<quarterly>/<overfill_col>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_line_overfill_heat(line: str, quarterly: str, overfill_col):
     quarterly = quarterly == "true"
@@ -584,7 +584,7 @@ def get_pcp(line, dimensions):
     return jsonify(return_object)
 
 
-@app.route('/api/bar_line/<begin_date>/<end_date>/<line>/<quarterly>', methods=['GET'])
+@app.route('/api/bar_line/<begin_date>/<end_date>/<line>/<quarterly>/<overfill_col>', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def bar_line(begin_date, end_date, line, quarterly, overfill_col):
     quarterly = quarterly == "true"
