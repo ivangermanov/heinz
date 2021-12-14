@@ -605,7 +605,7 @@ def bar_line(begin_date, end_date, line, quarterly):
 
     df = df[(df["Date"] >= begin_date) & (df["Date"] <= end_date)]
     df = add_sku_type(df)
-    unique_sku_types = ["Duos", "Base", "Family", "Mega", "PMSU"]
+    unique_sku_types = ["Duos", "Base", "Family", "Mega", "PMSU", "Unknown"]
     unique_skus = list(df["SKU_type"].unique())
     overfill_values = {}
     legend = unique_sku_types.copy()
