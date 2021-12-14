@@ -73,6 +73,7 @@ class FeatureInstance:
                 df_check = df_check.groupby(cn.DATE_COL).sum().reset_index()
                 df_check.drop(["Unnamed: 0", "Overfill"], axis=1, inplace=True)
                 df_check[list(cn.OVERFILL_AGGREGATION_TYPES.keys())] = df_check_overfills[list(cn.OVERFILL_AGGREGATION_TYPES.keys())].values
+                df_check["Cummulative Absolute Overfill"] = abs(df_check["Underfill"]) + df_check["Overfill"]
             else:
                 df_check[cn.DATE_COL] = df_check[cn.DATE_COL].dt.floor(freq="H")
                 aggregates = prepare_aggregates(cn.OVERFILL_AGGREGATION_TYPES)
@@ -80,7 +81,7 @@ class FeatureInstance:
                 df_check = df_check.groupby(cn.DATE_COL).sum().reset_index()
                 df_check.drop(["Unnamed: 0", "Overfill"], axis=1, inplace=True)
                 df_check[list(cn.OVERFILL_AGGREGATION_TYPES.keys())] = df_check_overfills[list(cn.OVERFILL_AGGREGATION_TYPES.keys())].values
-
+                df_check["Cummulative Absolute Overfill"] = abs(df_check["Underfill"]) + df_check["Overfill"]
         return df_check
 
     def get_hourly_stats(self):

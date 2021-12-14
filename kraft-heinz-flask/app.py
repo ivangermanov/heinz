@@ -643,7 +643,7 @@ def bar_line(begin_date, end_date, line, quarterly, overfill_col):
 @app.route('/api/get_available_maps', methods=['GET'])
 @cross_origin(origin='*', headers=['Content-Type'])
 def get_available_maps():
-    return jsonify(list(config.OVERFILL_AGGREGATION_TYPES.keys()))
+    return jsonify(list(config.OVERFILL_AGGREGATION_OPTIONS))
 
 
 # Get a single todo

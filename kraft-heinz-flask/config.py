@@ -61,6 +61,13 @@ OVERFILL_AGGREGATION_TYPES = {
     "Cumulative Overfill": lambda x: x.sum(),
 }
 
+OVERFILL_AGGREGATION_OPTIONS = {
+    "Underfill",
+    "Overfill",
+    "Cumulative Overfill",
+    "Cummulative Absolute Overfill"
+}
+
 REST_AGGREGATION_TYPES = {
     col: lambda x: x.sum() for col in AI_CW_COLS
 }
