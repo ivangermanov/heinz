@@ -92,7 +92,7 @@
           <q-item-label
             caption
             v-if="data !== null"
-          >{{ new Date(data.current_date[0]).getHours() }}-Now</q-item-label>
+          >{{ data.current_date[0] }}-Now</q-item-label>
         </q-item-section>
       </q-item>
 
@@ -111,7 +111,7 @@
           <q-item-label
             caption
             v-if="data !== null"
-          >Shift {{ current_shift[0] }}</q-item-label>
+          >Shift {{ data.current_shift[0] }}</q-item-label>
         </q-item-section>
       </q-item>
     </q-list>
@@ -128,7 +128,8 @@
     <q-separator />
 
     <q-card-section class="flex items-center justify-center text-h6">
-      <span v-if="data !== null">{{period === "current_hour" ? data.overfill_value[0].toFixed(2) : data.overfill_values.toFixed(2)}} lbs</span>
+      <span v-if="data !== null && !isPast">{{period === "current_hour" ? data.overfill_value[0].toFixed(2) : data.overfill_values.toFixed(2)}} lbs</span>
+      <span v-if="data !== null && isPast"> {{ data.toFixed(2) }} lbs </span>
     </q-card-section>
 
   </q-card>

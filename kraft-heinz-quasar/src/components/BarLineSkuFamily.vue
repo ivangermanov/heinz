@@ -106,7 +106,6 @@ export default defineComponent({
           data: overfillValues[key],
         });
       });
-      console.log(overfillValuesSeries);
       return overfillValuesSeries;
     });
 
@@ -154,8 +153,8 @@ export default defineComponent({
 
     const computedModel = computed(() => {
       return {
-        from: '01-01-2021',
-        to: '02-01-2021',
+        from: '08-01-2021',
+        to: '08-09-2021',
       };
     });
 
